@@ -187,11 +187,9 @@ export default {
         let arr = document.querySelectorAll("#monkey > *");
         let clientHeight = 0;
         for(let i = 0; i < arr.length - 1; i++) {
-          console.log(arr[i])
           clientHeight += arr[i].clientHeight;
         }
         this.height = monkey.clientHeight - clientHeight;
-        console.log(monkey.clientHeight + "/" + clientHeight)
         let frame = document.querySelector("#frame");
         let right = document.querySelector("#script");
         let clientWidth = frame.clientWidth - right.clientWidth;
