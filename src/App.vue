@@ -1,0 +1,44 @@
+<template>
+  <div id="app">
+    <img src="./assets/logo.png">
+    <i-select v-model="interval" style="width: 80px; margin-right: 10px">
+        <i-option v-for="item in intervals" :value="item" :key="item">{{
+          item + " 秒"
+        }}</i-option>
+      </i-select>
+      <i-button type="primary" @click="onOK">確定</i-button>
+  </div>
+</template>
+
+<script>
+
+export default {
+  name: 'App',
+  components: {
+    // HelloWorld
+  },
+  data() {
+    return {
+      visible: false,
+      cycle: 5,
+      cycles: [1, 2, 3, 5, 10, 20, 30, 50, 80, 100],
+      interval: 10,
+      intervals: [0, 10, 15, 20, 30],
+      width: document.body.clientWidth - 200,
+      height: document.body.clientHeight - 300,
+      stdout: "",
+    };
+  },
+}
+</script>
+
+<style>
+#app {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
+</style>
