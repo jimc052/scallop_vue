@@ -12,7 +12,6 @@
 </template>
 
 <script>
-import Electron from "../system/Electron.js"
 
 export default {
   name: 'Explore',
@@ -20,49 +19,62 @@ export default {
   },
   data () {
     return {
-      split1: 0.5,
-      //
+      split1: 0.3,
       data1: [{
-            title: 'parent 1',
-            expand: true,
-            children: [{
-                    title: 'parent 1-1',
-                    expand: true,
-                    children: [{ title: 'leaf 1-1-1'
-                        }, {
-                          title: 'leaf 1-1-2'
-                        }]
-                }, {
-                    title: 'parent 1-2',
-                    expand: true,
-                    children: [
-                        {
-                            title: 'leaf 1-2-1'
-                        },
-                        {
-                            title: 'leaf 1-2-1'
-                        }
-                    ]
-                }
-            ]
+          title: 'parent 1',
+          expand: true,
+          children: [{
+              title: 'parent 1-1',
+              expand: true,
+              children: [{ 
+                title: 'leaf 1-1-1'
+              }, {
+                title: 'leaf 1-1-2'
+              }]
+            }, {
+                title: 'parent 1-2',
+                expand: true,
+                children: [
+                    {
+                        title: 'leaf 1-2-1'
+                    },
+                    {
+                        title: 'leaf 1-2-1'
+                    }
+                ]
+            }
+          ]
         }
       ]
-        
     }
   },
   async mounted() {
     if(this.$isElectron== true){
       try{
-        console.log(typeof Electron.checkDevice)
-        // let result1 = await Electron.shell("adb shell ls -al", (data)=>{
-        //   console.log(data)
-        // });
-        // console.log(result1);
-        let result2 = await Electron.checkDevice();
+        let result2 = await this.retrive();
+        
         console.log(result2);
       } catch(e){
-        console.log(e)
+        alert(e)
       }
+    }
+  },
+  methods: {
+    retrive(path){
+      if(typeof path == "undefined") path = "";
+      return new Promise( async (success, error) => {
+        if(this.$isElectron== true){
+          try{
+            let result2 = await window.shell("adb shell ls -F " + path);
+            
+            console.log(result2);
+          } catch(e){
+            error(e)
+          }
+        } else {
+          success([])
+        }
+      })
     }
   },
 }
@@ -75,11 +87,15 @@ html, body {
   padding: 0px;
   overflow: hidden;
 }
+div, span {
+  user-select: none;
+}
 * {
   box-size: border-box;
+  font-family: 'Times New Roman', 'Helvetica Neue', 微軟正黑體, 'Microsoft Jhenghei', Helvetica, Arial, sans-serif;
+	font-size: 16px;
 }
 #explore {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -90,10 +106,16 @@ html, body {
   height: 100%;
 }
 .demo-split{
-        height: 200px;
-        border: 1px solid #dcdee2;
-    }
-    .demo-split-pane{
-        padding: 10px;
-    }
+  height: 200px;
+  border: 1px solid #dcdee2;
+}
+.demo-split-pane{
+  padding: 10px;
+}
+.ivu-tree {
+  text-align: left;
+}
+.ivu-tree ul li {
+  padding: 0px;
+}
 </style>

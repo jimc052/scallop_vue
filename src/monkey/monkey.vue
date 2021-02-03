@@ -1,60 +1,57 @@
 <template>
-  <div id="monkey">
-    <Menu
-      mode="horizontal"
-      theme="primary"
-      active-name="1"
-      @on-select="onMenuSelect"
-    >
-      <Submenu name="file">
-        <template slot="title">
-          檔案
-        </template>
-        <MenuItem name="add">
-          新增腳本
-        </MenuItem>
-        <MenuItem name="clone">
-          另存腳本
-        </MenuItem>
-        <MenuItem name="download">
-          滙出腳本
-        </MenuItem>
-        <MenuItem name="download">
-          關閉編輯器
-        </MenuItem>
-      </Submenu>
-    </Menu>
+  <div id="monkey" >
     <div id="menu" style="background: #2d8cf0;" >
-      <Dropdown class="dropdown" style="margin-right: 10px">
+      <Dropdown class="dropdown" style="margin-right: 10px" @on-click="onMenuSelect">
+        <div style="cursor: pointer;">
         腳本
+        <Icon type="ios-arrow-down"></Icon>
+        </div>
         <DropdownMenu slot="list">
           <DropdownItem name="新增腳本">
             新增腳本
           </DropdownItem>
-          <DropdownItem name="另存腳本" divided>
+          <DropdownItem name="另存腳本">
             另存腳本
           </DropdownItem>
+          <DropdownItem name="download" divided>
+            滙出腳本
+          </DropdownItem>
+          <Dropdown placement="right-start" v-if="playList.length > 0">
+						<DropdownItem :disabled="playList.length == 0" divided>開啟最近腳本
+              <icon type="ios-arrow-forward" style="margin-left: 2px;"></icon>
+            </DropdownItem>
+						<DropdownMenu slot="list" v-if="playList.length > 0">
+              <!-- <DropdownItem name="速0.94" :selected="rate == 0.94">慢</DropdownItem>
+              <DropdownItem name="速1" :selected="rate == 1">正常</DropdownItem>
+              <DropdownItem name="速1.2" :selected="rate == 1.2">快</DropdownItem> -->
+						</DropdownMenu>
+					</Dropdown>
         </DropdownMenu>
       </Dropdown>
     </div>
 
     <div id="frame">
-      <div id="left" :style="{height: (src.length == 0 ? '100%' : (height + 'px'))}">
-        <div ref="imgframe"
+      <div id="left" :style="{height: (src.length == 0 ? '100%' : (height + 'px'))}" style="background: rgb(32,32,32)">
+        <div id="imgframe" 
           style="flex: 1; display: flex; flex-direction: column; justify-content: center;
             align-items: center;"
         >
           <div style="position: relative">
             <img id="img" ref="img" :src="src" :width="width + 'px'" />
-            <div
-              id="cursor"
-              v-if="cursor != null"
-              :style="{ top: cursor.y + 'px', left: cursor.x + 'px' }"
+            <div id="cursor"  
+              :style="{ 
+                top: (cursor == null ? 0 :cursor._y) + 'px', 
+                left: (cursor == null ? 0 :cursor._x) + 'px',
+                display: (cursor == null ? 'none' : 'inline-block'),
+                width: (cursorRadius * 2) + 'px', 
+                height: (cursorRadius * 2) + 'px', 
+                borderRadius: cursorRadius + 'px', 
+              }"
+              style="border: 3px solid #c01921;"
             />
           </div>
         </div>
-
-        <div class="footer" v-if="src.length > 0 || $isElectron">
+        <div id="left_footer" class="footer" v-if="src.length > 0 || $isElectron">
           <div>
             <Button
               type="success"
@@ -79,41 +76,36 @@
             </Button>
           </div>
           <div style="flex: 1"></div>
-          <div style="margin-left: 10px; width: 40px" v-show="x > -1 && y > -1">
-            <div
-              style="display: flex; flex-direction: row; align-items: center"
-            >
-              <div>X:</div>
-              <div style="flex: 1; text-align: right">{{ x }}</div>
+          <div style="margin-left: 10px; width: 40px; color: white;" v-show="x > -1 && y > -1">
+            <div style="display: flex; flex-direction: row; align-items: center;" >
+              <div style="font-size: 12px !important;">X:</div>
+              <div style="flex: 1; text-align: right; font-size: 12px !important;">{{ x }}</div>
             </div>
-            <div
-              style="display: flex; flex-direction: row; align-items: center"
-            >
-              <div>Y:</div>
-              <div style="flex: 1; text-align: right">{{ y }}</div>
+            <div style="display: flex; flex-direction: row; align-items: center" >
+              <div style="font-size: 12px !important;">Y:</div>
+              <div style="flex: 1; text-align: right; font-size: 12px !important;">{{ y }}</div>
             </div>
           </div>
         </div>
       </div>
-      <Script id="right"
-        v-if="src.length > 0"
-        ref="script"
-        @on-row-change="onRowChange"
-        @on-cursor-change="onCursorChange"
-        :style="{height: height + 'px'}"
+      <Script id="right" v-if="src.length > 0" ref="script"
+        @on-row-change="onRowChange" @on-cursor-change="onCursorChange"
+        :style="{height: height + 'px', width: '300px'}"
       />
     </div>
     <ExecScript :script="execScript" @on-close="closeScript" />
+    <ModalOpen title="新增" />
   </div>
 </template>
 <script>
 import Script from "./script";
 import ExecScript from "./execScript";
+import ModalOpen from "./modalOpen";
 let rate = 1;
 
 export default {
   name: "Monkey",
-  components: { Script, ExecScript },
+  components: { Script, ExecScript, ModalOpen },
   data() {
     return {
       src: "",
@@ -124,10 +116,14 @@ export default {
       rows: 0,
       execScript: "",
       cursor: null,
+      script: {
+      },
+      playList: [],
+      cursorRadius: 10, // 半徑
     };
   },
   async mounted() {
-    // alert(navigator.userAgent)
+    let self = this;
     this.$refs["img"].onload = () => {
       this.x = -1;
       this.y = -1;
@@ -166,20 +162,83 @@ export default {
     } catch (e) {
       console.log(e);
     }
+
+    window.addEventListener('keydown', this.onKeydown, false);
+    document.querySelector('#cursor').addEventListener('mousedown', (e)=>{
+      e.preventDefault();
+      let el = document.querySelector('#cursor');
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+
+
+      document.querySelector('#cursor').addEventListener('mousemove', mousemove, false);
+      document.querySelector('#cursor').addEventListener('mouseup', mouseup, false);
+      document.querySelector('#cursor').addEventListener('mouseout', mouseup, false);
+
+      function mousemove(e){
+        e.preventDefault();
+        // console.log("mousemove: " + e.clientX + ", " + e.clientY)
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        let top = (el.offsetTop - pos2);
+        let left = (el.offsetLeft - pos1);
+        let clientHeight = document.querySelector('#img').clientHeight;
+        let clientWidth = document.querySelector('#img').clientWidth;
+        // console.log("clientHeight: " + clientHeight + ", clientWidth: " + clientWidth)
+        if(top > (0 - self.cursorRadius) && left > (0 - self.cursorRadius)
+          && top < (clientHeight - self.cursorRadius) && left < (clientWidth - self.cursorRadius)
+        ) {
+          el.style.top = top + "px";
+          el.style.left = left + "px";
+          self.cursor._y = top;
+          self.cursor._x = left;  
+          self.cursor.x = Math.floor((self.cursor._x + self.cursorRadius) * rate);
+          self.cursor.y = Math.floor((self.cursor._y + self.cursorRadius) * rate);
+          console.log("cursor: " + self.cursor.x + ", " + self.cursor.y)
+        } else {
+          return;
+        }
+      }
+
+      function mouseup(){
+        if(pos3 == 0 && pos4 == 0) return;
+        document.querySelector('#cursor').removeEventListener('mousemove', mousemove);
+        document.querySelector('#cursor').removeEventListener('mouseup', mouseup);
+        self.$refs["script"].update(self.cursor);
+        pos3 = 0; 
+        pos4 = 0;
+      }
+    }, false);
   },
   destroyed() {
     this.broadcast.$off("on-resize", this.onResize);
+    window.removeEventListener('keydown', this.onKeydown, false);
   },
   methods: {
+    onKeydown(event){
+      let o = document.activeElement;
+			let pk = navigator.userAgent.indexOf('Macintosh') > -1 ? event.metaKey : event.ctrlKey;
+			let ak = navigator.userAgent.indexOf('Macintosh') > -1  ? event.ctrlKey : event.altKey;
+			let sk = event.shiftKey, keyCode = event.keyCode;
+      let char = (event.keyCode >=48 && event.keyCode <=122) ? String.fromCharCode(event.keyCode).toUpperCase() : ""
+      if(keyCode == 27) {
+        if (document.querySelector("#download_clipboard") != null) 
+          this.$Modal.remove()
+      }
+    },
     onRowChange(list) {
       this.rows = list.length;
     },
     onCursorChange(row, index) {
       if (row != null) {
         this.cursor = Object.assign({}, row);
-        this.cursor.x = Math.ceil(row.x / rate) - 10;
-        this.cursor.y = Math.ceil(row.y / rate) - 10;
-      } else this.cursor = null;
+        this.cursor._x = Math.ceil(row.x / rate) - this.cursorRadius;
+        this.cursor._y = Math.ceil(row.y / rate) - this.cursorRadius;
+      } else 
+        this.cursor = null;
     },
     onResize() {
       if (this.src.length > 0) {
@@ -192,24 +251,36 @@ export default {
         this.height = monkey.clientHeight - clientHeight;
         let frame = document.querySelector("#frame");
         let right = document.querySelector("#script");
-        let clientWidth = frame.clientWidth - right.clientWidth;
+        let clientWidth = frame.clientWidth - right.clientWidth - 50;
+        clientHeight = this.height;
+        arr = document.querySelectorAll("#left > *");
+        for(let i = 0; i < arr.length; i++) {
+          if(arr[i].id != "imgframe"){
+            clientHeight -= arr[i].clientHeight;
+          }
+        }
         do {
           let xRate = this.$refs["img"].naturalWidth / clientWidth;
           let h = this.$refs["img"].naturalHeight / xRate;
-          if (h > frame.clientHeight - 100) {
+          let w = this.$refs["img"].naturalWidth / xRate;
+
+          if (h > clientHeight - 50) {
             clientWidth -= 10;
           } else {
             if (clientWidth < this.$refs["img"].naturalWidth)
               this.width = clientWidth;
-            else this.width = this.$refs["img"].naturalWidth;
-              rate = this.$refs["img"].naturalWidth / this.width;
+            else 
+              this.width = this.$refs["img"].naturalWidth;
+            rate = this.$refs["img"].naturalWidth / this.width;
+            this.onCursorChange(this.cursor)
             break;
           }
         } while (clientWidth > 0);
       }
     },
     onMenuSelect(name) {
-      if (name === "download") this.download();
+      if (name === "download") 
+        this.download();
     },
     download() { // 滙出
       this.$Modal.confirm({
@@ -220,7 +291,7 @@ export default {
             "textarea",
             {
               attrs: {
-                id: "clipboard",
+                id: "download_clipboard",
                 style:
                   "height: " +
                   (document.body.clientHeight - 300) +
@@ -244,7 +315,7 @@ export default {
         },
         onOk: () => {
           if (this.$isElectron) {
-            let el = document.getElementById("clipboard");
+            let el = document.getElementById("download_clipboard");
             if (typeof el === "object") {
               try {
                 window.execScript(el.value, { cycle: 1 });
@@ -256,8 +327,8 @@ export default {
         },
       });
       setTimeout(() => {
-        let el = document.getElementById("clipboard");
-        if (typeof el === "object") {
+        let el = document.getElementById("download_clipboard");
+        if (el != null && typeof el === "object") {
           el.select();
           let range = document.createRange();
           range.selectNode(el);
@@ -268,19 +339,21 @@ export default {
     },
     async capture() {
       try {
-        await window.screenCapture();
+        vm.loading();
+        this.src = await window.screenCapture();
+        localStorage["monkey-img"] = this.src;
+        vm.loading(false);
       } catch (e) {
-        alert(e);
+        vm.loading(false);
+        // alert(e);
       }
     },
     parseScript() {
       let s = "";
       this.$refs["script"].list.forEach((el, index) => {
         let s2 = "";
-        if (typeof el.title === "string") {
-          s2 += "#" + el.title + "\n";
-        }
-        if (typeof el.x === "number" && typeof el.y === "number") {
+        
+        if (!isNaN(el.x) && typeof !isNaN(el.y)) {
           s2 +=
             "DispatchPointer(0,0,0," +
             el.x +
@@ -293,14 +366,17 @@ export default {
             el.y +
             ",0,0,0,0,0,0,0)\n";
         }
-        if (typeof el.second) {
+        if (!isNaN(el.second)) {
           s2 += "UserWait(" + parseFloat(el.second) * 1000 + ")\n";
         }
+
+        if (typeof el.title === "string" && s2.length > 0)
+          s2 = "#" + el.title + "\n" + s2;
 
         if (s2.length > 0) s += "" + s2 + "\n";
       });
       if (s.length > 0) {
-        s = "type= raw events\ncount= 10\nspeed= 1.0\nstart data >>\n\n" + s; // + "#等待20秒\nUserWait(20000)";
+        s = "type= raw events\ncount= 10\nspeed= 1.0\nstart data >>\n\n" + s;
       }
       return s;
     },
@@ -374,9 +450,18 @@ body {
 }
 * {
   box-size: border-box;
+  font-family: 'Times New Roman', 'Helvetica Neue', 微軟正黑體, 'Microsoft Jhenghei', Helvetica, Arial, sans-serif;
+	font-size: 16px;
+}
+div, span {
+  user-select: none;
+}
+.ivu-input {
+  font-size: 14px;
+  padding: 4px;
 }
 #monkey {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  /* font-family: "Avenir", Helvetica, Arial, sans-serif; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -413,7 +498,7 @@ body {
 .footer {
   min-height: 50px;
   width: 100%;
-  border: 1px solid #e6e6e6;
+  border-top: 1px solid #e6e6e6;
   padding: 5px;
   display: flex;
   flex-direction: row;
@@ -425,14 +510,30 @@ body {
 }
 #cursor {
   display: inline-block;
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
   background-color: rgba(192, 25, 33, 0.3);
-  border: 3px solid #c01921;
+  
   position: absolute;
+  animation: mymove 5s infinite;
+  cursor: move;
 }
 .ivu-dropdown-rel{
   font-size: 16px;
+}
+.ivu-dropdown-item {
+  padding: 7px 10px;
+  text-align: left;
+}
+.ivu-dropdown-item-divided:before {
+  margin: 0 -10px
+}
+@keyframes mymove {
+  from {
+    background-color: rgb(192,192,192, 0.3);
+    border-color: rgb(192, 25, 33)
+  }
+  to {
+    background-color:rgba(192, 25, 33, 0.3);
+    border-color: rgb(192,192,192)
+  }
 }
 </style>

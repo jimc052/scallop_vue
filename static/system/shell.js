@@ -1,12 +1,20 @@
 if (navigator.userAgent.indexOf("Electron") > -1) {
+  const {remote: app, ipcRenderer: ipc, clipboard: clipboard} = require('electron');
+  let sharedObj = app.getGlobal("sharedObj");
   let fs = require("fs");
-  let dir = "monkey-script";
-  if (!fs.existsSync(dir)) {
-    setTimeout(()=>{
-      let result = fs.mkdirSync(dir);
-      console.log(result)          
-    }, 1000)
+  if (!fs.existsSync(sharedObj.path)) {
+    fs.mkdirSync(sharedObj.path);
+  }
 
+  window.path = sharedObj.path + sharedObj.separator + "monkey-script";
+  if (!fs.existsSync(window.path)) {
+    fs.mkdirSync(window.path);
+  }
+
+  window.readImage = () => {
+    const contents = fs.readFileSync(sharedObj.path + sharedObj.separator + "monkey-script" 
+      + sharedObj.separator + 'screen.png', {encoding: 'base64'});
+    return "data:image/png;base64," + contents;
   }
 
   window.shell = (args, output) => {
@@ -83,20 +91,20 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
   window.screenCapture = () => {
     return new Promise( async (success, error) => {
       try{
+        console.log("screenCapture: " + (new Date()) + ", start......");
         let androidPath = "/sdcard";
-        let result1 = await window.shell("adb shell screencap -p " + androidPath + "/Download/screen.png");
-        console.log("screencap: " + result1);
+        await window.shell("adb shell screencap -p " + androidPath + "/Download/screen.png");
+        console.log("screenCapture: " + (new Date()) + ", finish......");
 
-        let result2 = await window.shell("adb pull " + androidPath + "/Download/screen.png " + dir + "/screen.png");
-        console.log("pull: " + result2);
+        let result2 = await window.shell("adb pull " + androidPath + "/Download/screen.png " + window.path + "/screen.png");
+        console.log("pull: "  + (new Date()) + "\n  " + result2);
 
-        let result3 = await window.shell("adb shell rm " + androidPath + "/Download/screen.png");
-        console.log("rm: " + result3);
+        // let result3 = await window.shell("adb shell rm " + androidPath + "/Download/screen.png");
+        // console.log("rm: " + result3);
 
-        await window.shell("open ./");
-        success()
+        let img = window.readImage();
+        success(img)
       } catch(e) {
-        alert(e)
         error(e)
       }
     });
@@ -118,7 +126,7 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
             console.log("adb shell rm: " + result1);
 
           if(typeof stdout == "function") stdout("adb push monkey.script ......");
-          let result2 = await window.shell("adb push " + dir + "/monkey.script " + androidPath + "/monkey.script");
+          let result2 = await window.shell("adb push " + window.path + "/monkey.script " + androidPath + "/monkey.script");
           if(typeof stdout == "function") 
             stdout(result2);
           else
@@ -151,7 +159,7 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
 
   window.fileWrite = (txt) => {
     try{
-      fs.writeFileSync(dir + "/monkey.script", txt, 'utf8');
+      fs.writeFileSync(window.path + "/monkey.script", txt, 'utf8');
     } catch(e) {
 
     }
