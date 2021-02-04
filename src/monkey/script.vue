@@ -35,12 +35,14 @@
         </draggable>
       </div>
       <div class="footer">
-        <Button type="success" @click="add()">新增</Button>
-        <Button type="success">插入</Button>
-        <Button type="error" v-if="list.length > 0" @click="list = []">清除</Button>
+        <div>
+          <Button type="success" @click="add()">新增</Button>
+          <Button type="success"  @click="insert">插入</Button>
+          <Button type="error" v-if="list.length > 0" @click="clearAll">清除</Button>
+        </div>
       </div>
     </div>
-    <modal v-model="visible" class-name="vertical-center-modal"
+    <modal v-model="visibleData" class-name="vertical-center-modal"
       :title="title" :width="300" :closable="false"
     >
       <table style="width: 100%" class="layout">
@@ -67,7 +69,7 @@
       </table>
 
       <div slot="footer">
-        <i-button type="error" @click="visible = false">取消</i-button>
+        <i-button type="error" @click="visibleData = false">取消</i-button>
         <i-button type="primary" @click="onOK">確定</i-button>
       </div>
     </modal>
@@ -86,7 +88,7 @@ export default {
   data() {
     return {
       title: "",
-      visible: false,
+      visibleData: false,
       row: {},
       list: [],
       enabled: true,
@@ -106,7 +108,7 @@ export default {
       this.cursor = index;
       this.row = Object.assign({}, this.list[index]);
       this.title = "編輯";
-      this.visible = true;
+      this.visibleData = true;
       this.$emit("on-cursor-change", this.row, index);
     },
     onClickSerial(index) {
@@ -116,15 +118,16 @@ export default {
     onOK() {
       for(let key in this.row) {
         if(key == "x" || key == "y" || key == "second") {
-          if(isNaN(this.row[key])) {
+          if(typeof this.row[key] == "string" && this.row[key].trim().length == 0) {
+            this.row[key] = this.row[key].trim();
+          } else if(typeof this.row[key] != "undefined" && (this.row[key] + "").length > 0 && isNaN(this.row[key])) {
             alert("請輸入數字")
             return;
           }
         }
       }
-      this.visible = false;
+      this.visibleData = false;
       let row = Object.assign({}, this.row);
-      console.log(row);
       if (typeof row.id === "undefined") {
         row.id = new Date().getTime();
         this.list.push(row);
@@ -157,8 +160,8 @@ export default {
     add(x, y) {
       this.row = {x, y, second: 1};
       this.title = "新增";
-      this.visible = true;
-      console.log(this.row)
+      this.visibleData = true;
+      // console.log(this.row)
     },
     onClickIcon(index) {
       this.list.splice(index, 1);
@@ -172,7 +175,7 @@ export default {
     },
     update(row){
       row = Object.assign({}, row);
-      console.log(row)
+      // console.log(row)
       for(let key in row) {
         if(key.indexOf("_") == 0) {
           delete row[key];
@@ -185,8 +188,16 @@ export default {
           break;
         }
       }
-      console.log(this.list)
+      // console.log(this.list)
       localStorage["monkey-scripts"] = JSON.stringify(this.list);
+    },
+    clearAll(){
+      this.$emit("on-cursor-change", null);
+      this.list = [];
+      delete localStorage["monkey-scripts"];
+    },
+    insert(){
+
     }
   },
   watch: {},

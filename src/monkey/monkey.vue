@@ -171,7 +171,6 @@ export default {
       pos3 = e.clientX;
       pos4 = e.clientY;
 
-
       document.querySelector('#cursor').addEventListener('mousemove', mousemove, false);
       document.querySelector('#cursor').addEventListener('mouseup', mouseup, false);
       document.querySelector('#cursor').addEventListener('mouseout', mouseup, false);
@@ -197,7 +196,7 @@ export default {
           self.cursor._x = left;  
           self.cursor.x = Math.floor((self.cursor._x + self.cursorRadius) * rate);
           self.cursor.y = Math.floor((self.cursor._y + self.cursorRadius) * rate);
-          console.log("cursor: " + self.cursor.x + ", " + self.cursor.y)
+          // console.log("cursor: " + self.cursor.x + ", " + self.cursor.y)
         } else {
           return;
         }
@@ -234,6 +233,17 @@ export default {
     },
     onCursorChange(row, index) {
       if (row != null) {
+        for(let key in row) {
+          if(key == "x" || key == "y") {
+            if(typeof row[key] == "undefined" || (typeof row[key] == "string" && row[key].trim().length == 0)
+              || (typeof row[key] != "undefined" && (row[key] + "").length > 0 && isNaN(row[key]))
+            ) {
+              this.cursor = null;
+              return;
+            }
+          }
+        }
+
         this.cursor = Object.assign({}, row);
         this.cursor._x = Math.ceil(row.x / rate) - this.cursorRadius;
         this.cursor._y = Math.ceil(row.y / rate) - this.cursorRadius;

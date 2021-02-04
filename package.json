@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
-    "build": "node build/build.js"
+    "build": "node build/build.js && npm run copy",
+    "copy": "cp -R /Users/jimc/Electron/scallop_vue/dist/monkey.html /Users/jimc/git.io/jimc052.github.io/monkey/ && cp -R /Users/jimc/Electron/scallop_vue/dist/static /Users/jimc/git.io/jimc052.github.io/monkey/ && npm run remove",
+    "remove": "rm /Users/jimc/git.io/jimc052.github.io/monkey/static/css/adb.* && rm /Users/jimc/git.io/jimc052.github.io/monkey/static/css/app.* && rm /Users/jimc/git.io/jimc052.github.io/monkey/static/css/explore.* && rm /Users/jimc/git.io/jimc052.github.io/monkey/static/js/adb.* && rm /Users/jimc/git.io/jimc052.github.io/monkey/static/js/app.* && rm /Users/jimc/git.io/jimc052.github.io/monkey/static/js/explore.*"
   },
   "dependencies": {
     "iview": "3.3.1",
