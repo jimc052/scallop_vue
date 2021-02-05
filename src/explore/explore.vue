@@ -2,10 +2,10 @@
   <div id="explore">
     <Split v-model="split1" min="120">
         <div slot="left" id="left" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
-             <Tree :data="data1" style="z-index: -1"></Tree>
+            <Tree :data="left" style="z-index: -1" :load-data="loadData"></Tree>
         </div>
         <div id="right" slot="right" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
-            <Tree :data="data1" style="z-index: -1"></Tree>
+            <tree :data="right" style="z-index: -1" :load-data="loadData"></tree>
         </div>
     </Split>
   </div>
@@ -20,40 +20,15 @@ export default {
   data () {
     return {
       split1: 0.3,
-      data1: [{
-          title: 'parent 1',
-          expand: true,
-          children: [{
-              title: 'parent 1-1',
-              expand: true,
-              children: [{ 
-                title: 'leaf 1-1-1'
-              }, {
-                title: 'leaf 1-1-2'
-              }]
-            }, {
-                title: 'parent 1-2',
-                expand: true,
-                children: [
-                    {
-                        title: 'leaf 1-2-1'
-                    },
-                    {
-                        title: 'leaf 1-2-1'
-                    }
-                ]
-            }
-          ]
-        }
-      ]
+      left: [],
+      right: []
     }
   },
   async mounted() {
     if(this.$isElectron== true){
       try{
-        let result2 = await this.retrive();
-        
-        console.log(result2);
+        let result = await this.retrive("/sdcard");
+        this.left = result;
       } catch(e){
         alert(e)
       }
@@ -61,13 +36,28 @@ export default {
   },
   methods: {
     retrive(path){
-      if(typeof path == "undefined") path = "";
+      path = typeof path == "undefined" ? "" : path + "/";
       return new Promise( async (success, error) => {
         if(this.$isElectron== true){
           try{
-            let result2 = await window.shell("adb shell ls -F " + path);
-            
-            console.log(result2);
+            let result = await window.shell("adb shell ls -F " + path);
+            let arr = result.split("\n");
+            let folder = [], file = [];
+            for(let i = 0; i < arr.length; i++){
+              let obj = {};
+              if(arr[i].substr(arr[i].length - 1, 1) == "/"){
+                folder.push({title: arr[i].substr(0, arr[i].length - 1), 
+                  expand: false,
+                  loading: false,
+                  children: [],
+                  path
+                })
+              } else if(arr[i].length > 0) {
+                file.push({title: arr[i]})
+              } else 
+                continue;
+            }
+            success(folder.concat(file))
           } catch(e){
             error(e)
           }
@@ -75,6 +65,14 @@ export default {
           success([])
         }
       })
+    },
+    async loadData (item, callback) {
+      try{
+        let result = await this.retrive(item.path + item.title);
+        callback(result)
+      } catch(e){
+        alert(e)
+      }
     }
   },
 }
@@ -117,5 +115,6 @@ div, span {
 }
 .ivu-tree ul li {
   padding: 0px;
+  margin: 0px;
 }
 </style>

@@ -7,29 +7,30 @@
         <Icon type="ios-arrow-down"></Icon>
         </div>
         <DropdownMenu slot="list">
-          <DropdownItem name="新增腳本">
+          <DropdownItem name="add">
             新增腳本
           </DropdownItem>
-          <DropdownItem name="另存腳本">
+          <DropdownItem name="另存腳本" v-if="editItem != null">
             另存腳本
           </DropdownItem>
-          <DropdownItem name="download" divided>
-            滙出腳本
+          <DropdownItem name="delete" v-if="editItem != null">
+            刪除腳本
           </DropdownItem>
-          <Dropdown placement="right-start" v-if="playList.length > 0">
-						<DropdownItem :disabled="playList.length == 0" divided>開啟最近腳本
+          <Dropdown placement="right-start" v-if="playList.length > 1">
+						<DropdownItem :disabled="playList.length == 0" divided>開啟最近的腳本
               <icon type="ios-arrow-forward" style="margin-left: 2px;"></icon>
             </DropdownItem>
-						<DropdownMenu slot="list" v-if="playList.length > 0">
-              <!-- <DropdownItem name="速0.94" :selected="rate == 0.94">慢</DropdownItem>
-              <DropdownItem name="速1" :selected="rate == 1">正常</DropdownItem>
-              <DropdownItem name="速1.2" :selected="rate == 1.2">快</DropdownItem> -->
+						<DropdownMenu slot="list" v-if="playList.length > 1">
+              <div v-for="(item, index) in playList"  :key="index">
+                <DropdownItem v-if="editItem != null && editItem.key != item.key" :name="'playlist-' + item.key">
+                  {{ (index) + ". " + item.name + " (" + item.project + ")"}}
+                </DropdownItem>
+              </div>
 						</DropdownMenu>
 					</Dropdown>
         </DropdownMenu>
       </Dropdown>
     </div>
-
     <div id="frame">
       <div id="left" :style="{height: (src.length == 0 ? '100%' : (height + 'px'))}" style="background: rgb(32,32,32)">
         <div id="imgframe" 
@@ -51,29 +52,16 @@
             />
           </div>
         </div>
-        <div id="left_footer" class="footer" v-if="src.length > 0 || $isElectron">
+        <div id="left_footer" class="footer" v-if="src.length > 0 || (editItem != null && $isElectron)">
           <div>
-            <Button
-              type="success"
-              v-if="$isElectron"
-              @click="capture"
-              style="margin-right: 5px"
-              >截圖
+            <Button type="success"  v-if="$isElectron" @click="capture" 
+              style="margin-right: 5px">截圖
             </Button>
-            <Button
-              type="success"
-              @click="runScript"
-              v-if="$isElectron && rows > 0"
-              style="margin-right: 5px"
-              >腳本
-            </Button>
-            <Button
-              type="success"
-              @click="download"
-              v-if="rows > 0"
-              style="margin-right: 5px"
-              >滙出
-            </Button>
+            <Button type="success" @click="runScript" 
+              v-if="$isElectron && src.length > 0 && rows > 0"
+              style="margin-right: 5px">腳本</Button>
+            <Button type="success" @click="download" v-if="src.length > 0 && rows > 0" 
+              style="margin-right: 5px">滙出</Button>
           </div>
           <div style="flex: 1"></div>
           <div style="margin-left: 10px; width: 40px; color: white;" v-show="x > -1 && y > -1">
@@ -88,19 +76,22 @@
           </div>
         </div>
       </div>
-      <Script id="right" v-if="src.length > 0" ref="script"
+      <Script id="right" ref="script" 
+        v-if="editItem != null" :editItem="editItem.key"
         @on-row-change="onRowChange" @on-cursor-change="onCursorChange"
-        :style="{height: height + 'px', width: '300px'}"
+        @on-open-mondal="onOpenMondalInsert"
+        :style="{height: (src.length == 0 ? '100%' : (height + 'px')), width: '300px'}"
       />
     </div>
     <ExecScript :script="execScript" @on-close="closeScript" />
-    <ModalOpen title="新增" />
+    <ModalOpen :visible="visibleModalOpen" @on-close="closeOpen" :editItem="editItem"  />
   </div>
 </template>
 <script>
 import Script from "./script";
 import ExecScript from "./execScript";
 import ModalOpen from "./modalOpen";
+import ModalInsert from "./modalInsert";
 let rate = 1;
 
 export default {
@@ -120,48 +111,38 @@ export default {
       },
       playList: [],
       cursorRadius: 10, // 半徑
+      visibleModalOpen: false,
+      editItem: null,
     };
   },
   async mounted() {
     let self = this;
-    this.$refs["img"].onload = () => {
-      this.x = -1;
-      this.y = -1;
-      this.onResize();
-    };
+    { // img 的事件
+      this.$refs["img"].onload = () => {
+        this.x = -1;
+        this.y = -1;
+        this.onResize();
+      };
 
-    this.$refs["img"].onmousedown = (e) => {
-      this.$refs["script"].add(this.x, this.y);
-    };
-    this.$refs["img"].onmousemove = (e) => {
-      this.x = Math.ceil(e.offsetX * rate);
-      this.y = Math.ceil(e.offsetY * rate);
-    };
-    this.$refs["img"].onmouseout = (e) => {
-      this.x = -1;
-      this.y = -1;
-    };
-    // console.log(document.getElementsByTagName("BODY"))
-    // console.log(document.getElementById("body"))
+      this.$refs["img"].onmousedown = (e) => {
+        this.$refs["script"].add(this.x, this.y);
+      };
+      this.$refs["img"].onmousemove = (e) => {
+        this.x = Math.ceil(e.offsetX * rate);
+        this.y = Math.ceil(e.offsetY * rate);
+      };
+      this.$refs["img"].onmouseout = (e) => {
+        this.x = -1;
+        this.y = -1;
+      };
+    }
     drop(document.getElementById("body"), (event, result) => {
       this.src = result;
-      localStorage["monkey-img"] = result;
+      this.cursor = null;
+      localStorage["monkeyImg-" + this.editItem.key] = result;
     });
-
-    let img = localStorage["monkey-img"];
-    if (typeof img === "string" && img.length > 0) {
-      this.src = img;
-    }
+    
     this.broadcast.$on("on-resize", this.onResize);
-
-    try {
-      // let result1 = await window.shell("adb shell ls");
-      // console.log(result1);
-      // let result2 = await window.checkDevice();
-      // console.log(result2);
-    } catch (e) {
-      console.log(e);
-    }
 
     window.addEventListener('keydown', this.onKeydown, false);
     document.querySelector('#cursor').addEventListener('mousedown', (e)=>{
@@ -211,6 +192,14 @@ export default {
         pos4 = 0;
       }
     }, false);
+    
+    let s = localStorage["monkeyPlaylist"];
+    if (typeof s === "string" && s.length > 0) {
+      this.playList = JSON.parse(s);
+    }
+    if(this.playList.length > 0) {
+      this.selectItem(this.playList[0].key);
+    }
   },
   destroyed() {
     this.broadcast.$off("on-resize", this.onResize);
@@ -224,7 +213,8 @@ export default {
 			let sk = event.shiftKey, keyCode = event.keyCode;
       let char = (event.keyCode >=48 && event.keyCode <=122) ? String.fromCharCode(event.keyCode).toUpperCase() : ""
       if(keyCode == 27) {
-        if (document.querySelector("#download_clipboard") != null) 
+        if (document.querySelector("#download_clipboard") != null 
+          || document.querySelector("#scriptValue") != null) 
           this.$Modal.remove()
       }
     },
@@ -291,6 +281,50 @@ export default {
     onMenuSelect(name) {
       if (name === "download") 
         this.download();
+      else if(name == "add") {
+        this.editItem = null;
+        this.src = "";
+        this.cursor = null;
+        this.visibleModalOpen = true;
+      } else if(name == "delete") {
+        delete localStorage["monkeyScript-" + this.editItem.key];
+        delete localStorage["monkeyImg-" + this.editItem.key];
+        for(var i = 0; i < this.playList.length; i++) {
+          if(this.editItem.key == this.playList[i].key){
+            this.playList.splice(i, 1)
+            break;
+          }
+        }
+        localStorage["monkeyPlaylist"] = JSON.stringify(this.playList);
+        this.editItem = null;
+        this.src = "";
+        this.cursor = null;
+        document.title = "monkey";
+      } else if(name.indexOf('playlist-') == 0) {
+        let key = name.replace('playlist-', "");
+        this.selectItem(key);
+      }
+    },
+    selectItem(key){
+      if(key != this.playList[0].key) {
+        for(var i = 0; i < this.playList.length; i++) {
+          if(key == this.playList[i].key){
+            let arr = this.playList.splice(i, 1)
+            this.playList.unshift(arr[0]);
+            break;
+          }
+        }
+      }
+      if(this.playList.length > 20) {
+        this.playList.slice(20, this.playList.length)   
+      }
+      
+      let img = localStorage["monkeyImg-" + this.playList[0].key];
+      this.src = (typeof img === "string" && img.length > 0) ? img : "";
+      this.cursor = null;
+      localStorage["monkeyPlaylist"] = JSON.stringify(this.playList);
+      this.editItem = this.playList[0];
+      document.title = "monkey[" + this.editItem.name + "(" + this.editItem.project + ", " + this.editItem.device + ")]";
     },
     download() { // 滙出
       this.$Modal.confirm({
@@ -351,7 +385,7 @@ export default {
       try {
         vm.loading();
         this.src = await window.screenCapture();
-        localStorage["monkey-img"] = this.src;
+        localStorage["monkeyImg-" + this.editItem.key] = this.src;
         vm.loading(false);
       } catch (e) {
         vm.loading(false);
@@ -362,7 +396,26 @@ export default {
       let s = "";
       this.$refs["script"].list.forEach((el, index) => {
         let s2 = "";
-        
+        if(typeof el.script == "string") {
+          let scripts = localStorage["monkeyScript-" + el.script];
+          if (typeof scripts === "string" && scripts.length > 0) {
+            let list = JSON.parse(scripts);
+            list.forEach((el2, index2) => {
+              let s3 = parse(el2);
+              if (s3.length > 0) s2 += (s2.length > 0 ? "\n" : "") + s3 ;
+            });
+          }
+        } else 
+          s2 = parse(el);
+        if (s2.length > 0) s += (s.length > 0 ? "\n" : "") + s2;
+      });
+      if (s.length > 0) {
+        s = "type= raw events\ncount= 10\nspeed= 1.0\nstart data >>\n\n" + s;
+      }
+      return s;
+
+      function parse(el) {
+        let s2 = "";
         if (!isNaN(el.x) && typeof !isNaN(el.y)) {
           s2 +=
             "DispatchPointer(0,0,0," +
@@ -374,21 +427,17 @@ export default {
             el.x +
             "," +
             el.y +
-            ",0,0,0,0,0,0,0)\n";
+            ",0,0,0,0,0,0,0)";
         }
         if (!isNaN(el.second)) {
-          s2 += "UserWait(" + parseFloat(el.second) * 1000 + ")\n";
+          s2 += (s2.length > 0 ? "\n" : "") + "UserWait(" + parseFloat(el.second) * 1000 + ")";
         }
 
         if (typeof el.title === "string" && s2.length > 0)
           s2 = "#" + el.title + "\n" + s2;
 
-        if (s2.length > 0) s += "" + s2 + "\n";
-      });
-      if (s.length > 0) {
-        s = "type= raw events\ncount= 10\nspeed= 1.0\nstart data >>\n\n" + s;
+        return s2
       }
-      return s;
     },
     async runScript() {
       this.execScript = this.parseScript();
@@ -396,6 +445,58 @@ export default {
     closeScript() {
       this.execScript = "";
     },
+    closeOpen(arg) {
+      if(typeof arg == "object") {
+        if(typeof arg.key == "undefined") {
+          arg.key = (new Date()).toString("yyyy-mm-ddThh:MM:ss.ms")
+        }
+        this.playList.unshift(arg);
+        this.selectItem(arg.key);
+      }
+      this.visibleModalOpen = false;
+    },
+    onOpenMondalInsert(){
+      let list = [], slef = this;
+       this.playList.forEach((item, index)=>{
+         if(index > 0) {
+           if(item.project == this.editItem.project && item.device == this.editItem.device)
+            list.push(item)
+         }
+       });
+      let script = "";
+      this.$Modal.confirm({
+        title: "插入腳本",
+        width: document.body.clientWidth - 100,
+        render: (h) => {
+          return h(ModalInsert, {
+              props: {
+                list
+              },
+              on: {
+                scriptChange: (value) => {
+                  script = value;
+                },
+                rowClick: (value) => {
+                  slef.$refs["script"].insert({script: value.key, name: value.name});
+                  this.$Modal.remove();
+                }
+              }
+          })
+        },
+        onOk: () => {
+          if(script.length > 0) {
+            try {
+              let arr = JSON.parse(script);
+              slef.$refs["script"].insert(arr)
+            } catch (e) {
+              alert(e)
+            }
+          } else {
+
+          }
+        },
+      });
+    }
   },
 };
 

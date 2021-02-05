@@ -11,25 +11,40 @@
           @end="dragging = false"
           @update="datadragEnd"
         >
-          <div class="list-group-item"
-            :class="{ active: index === cursor }"
-            v-for="(el, index) in list" :key="index"
-            style="cursor: pointer"
-          >
-            <div @click="onClickSerial(index)" style="width: 30px">
-              {{ index + 1 + " " }}
-            </div>
-            <div style="flex: 1; margin: 0 3px" @click="onEdit(index)">
-              <div style="font-size: 16px; text-align: left">
-                {{ el.title }}
+          <div v-for="(el, index) in list" :key="index">
+            <div v-if="typeof el.title == 'string'"
+              class="list-group-item"
+              :class="{ active: index === cursor }"
+              style="cursor: pointer"
+            >
+              <div @click="onClickSerial(index)" style="width: 30px">
+                {{ index + 1 + " " }}
               </div>
-              <div style="text-align: left">
-                {{ "暫停：" + el.second + " 秒" }}
+              <div style="flex: 1; margin: 0 3px" @click="onEdit(index)">
+                <div style="font-size: 16px; text-align: left">
+                  {{ el.title }}
+                </div>
+                <div style="text-align: left">
+                  {{ "暫停：" + el.second + " 秒" }}
+                </div>
+                <div></div>
               </div>
-              <div></div>
+              <div @click="onClickIcon(index)" style="padding: 3px 5px">
+                <Icon type="md-trash" size="20" />
+              </div>
             </div>
-            <div @click="onClickIcon(index)" style="padding: 3px 5px">
-              <Icon type="md-trash" size="20" />
+            <div v-else class="list-group-item" style="height: 40px;">
+              <div style="width: 30px;">
+                {{ index + 1 + " " }}
+              </div>
+              <div style="flex: 1; margin: 0 3px">
+                <div style="font-size: 16px; text-align: left">
+                  {{ el.name }}
+                </div>
+              </div>
+              <div @click="onClickIcon(index)" style="padding: 3px 5px; cursor: pointer">
+                <Icon type="md-trash" size="20" />
+              </div>
             </div>
           </div>
         </draggable>
@@ -37,7 +52,7 @@
       <div class="footer">
         <div>
           <Button type="success" @click="add()">新增</Button>
-          <Button type="success"  @click="insert">插入</Button>
+          <Button type="success"  @click="$emit('on-open-mondal')">插入</Button>
           <Button type="error" v-if="list.length > 0" @click="clearAll">清除</Button>
         </div>
       </div>
@@ -82,9 +97,9 @@ import draggable from "vuedraggable";
 export default {
   name: "Script",
   components: {
-    draggable,
+    draggable
   },
-  props: [],
+  props: ["editItem"],
   data() {
     return {
       title: "",
@@ -97,13 +112,18 @@ export default {
     };
   },
   mounted() {
-    let scripts = localStorage["monkey-scripts"];
-    if (typeof scripts === "string" && scripts.length > 0) {
-      this.list = JSON.parse(scripts);
-      this.$emit("on-row-change", this.list);
-    }
+    this.retrieve(this.editItem)
   },
   methods: {
+    retrieve(key){
+      let scripts = localStorage["monkeyScript-" + key];
+      if (typeof scripts === "string" && scripts.length > 0) {
+        this.list = JSON.parse(scripts);
+      } else {
+        this.list = [];
+      }
+      this.$emit('on-row-change', this.list);
+    },
     onEdit(index) {
       this.cursor = index;
       this.row = Object.assign({}, this.list[index]);
@@ -153,7 +173,7 @@ export default {
         this.list[this.cursor] = row;
         this.$emit("on-cursor-change", row);
       }
-      localStorage["monkey-scripts"] = JSON.stringify(this.list);
+      this.save();
       this.$emit("on-row-change", this.list);
       this.row = {};
     },
@@ -161,17 +181,16 @@ export default {
       this.row = {x, y, second: 1};
       this.title = "新增";
       this.visibleData = true;
-      // console.log(this.row)
     },
     onClickIcon(index) {
       this.list.splice(index, 1);
-      localStorage["monkey-scripts"] = JSON.stringify(this.list);
+      this.save();
       this.$emit("on-row-change", this.list);
       this.$emit("on-cursor-change", null, -1);
       this.cursor = -1;
     },
     datadragEnd(e) {
-      localStorage["monkey-scripts"] = JSON.stringify(this.list);
+      this.save();
     },
     update(row){
       row = Object.assign({}, row);
@@ -189,18 +208,34 @@ export default {
         }
       }
       // console.log(this.list)
-      localStorage["monkey-scripts"] = JSON.stringify(this.list);
+      this.save();
     },
     clearAll(){
       this.$emit("on-cursor-change", null);
       this.list = [];
-      delete localStorage["monkey-scripts"];
+      this.save();
     },
-    insert(){
-
+    insert(data){
+      if(Array.isArray(data)) {
+        this.list = this.list.concat(data)
+      } else {
+        this.list.push(data)
+      }
+      this.save()
+      this.$emit("on-row-change", this.list);
+    },
+    save() {
+      if(this.list.length == 0)
+        delete localStorage["monkeyScript-" + this.editItem];
+      else
+        localStorage["monkeyScript-" + this.editItem] = JSON.stringify(this.list);
     }
   },
-  watch: {},
+  watch: {
+    editItem(value) {
+      this.retrieve(value)
+    }
+  },
 };
 </script>
 <style>
@@ -217,7 +252,6 @@ export default {
   opacity: 0.5;
   background: #c8ebfb;
 }
-
 .list-group-item {
   border: 1px solid #eee;
   /* height: 30px; */
