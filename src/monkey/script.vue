@@ -2,18 +2,12 @@
   <div>
     <div id="script" style="height: 100%; display: flex; flex-direction: column">
       <div id="list" style="flex: 1; padding: 5px; overflow-y: auto;">
-        <draggable
-          :list="list"
-          :disabled="!enabled"
-          class="list-group"
-          ghost-class="ghost"
-          @start="dragging = true"
-          @end="dragging = false"
+        <draggable  :list="list" :disabled="!enabled" class="list-group"
+          ghost-class="ghost" @start="dragging = true" @end="dragging = false"
           @update="datadragEnd"
         >
-          <div v-for="(el, index) in list" :key="index">
-            <div v-if="typeof el.title == 'string'"
-              class="list-group-item"
+          <div v-for="(el, index) in list" :key="index" class="list-group-item2">
+            <div v-if="typeof el.title == 'string'" class="list-group-item"
               :class="{ active: index === cursor }"
               style="cursor: pointer"
             >
@@ -24,7 +18,7 @@
                 <div style="font-size: 16px; text-align: left">
                   {{ el.title }}
                 </div>
-                <div style="text-align: left">
+                <div style="text-align: left; font-size: 12px;">
                   {{ "暫停：" + el.second + " 秒" }}
                 </div>
                 <div></div>
@@ -33,7 +27,7 @@
                 <Icon type="md-trash" size="20" />
               </div>
             </div>
-            <div v-else class="list-group-item" style="height: 40px;">
+            <div v-else class="list-group-item" style="color: rgb(255,69,0);" >
               <div style="width: 30px;">
                 {{ index + 1 + " " }}
               </div>
@@ -82,7 +76,6 @@
           <td><Input v-model="row.second" placeholder="暫停(秒)" /></td>
         </tr>
       </table>
-
       <div slot="footer">
         <i-button type="error" @click="visibleData = false">取消</i-button>
         <i-button type="primary" @click="onOK">確定</i-button>
@@ -168,7 +161,6 @@ export default {
         }
         this.cursor = this.list.length - 1;
         this.$emit("on-cursor-change", row, this.cursor);
-        console.log(this.cursor);
       } else {
         this.list[this.cursor] = row;
         this.$emit("on-cursor-change", row);
@@ -229,10 +221,14 @@ export default {
         delete localStorage["monkeyScript-" + this.editItem];
       else
         localStorage["monkeyScript-" + this.editItem] = JSON.stringify(this.list);
+    }, 
+    reset(){
+      this.cursor = -1;
     }
   },
   watch: {
     editItem(value) {
+      // console.log(value)
       this.retrieve(value)
     }
   },
@@ -254,11 +250,12 @@ export default {
 }
 .list-group-item {
   border: 1px solid #eee;
-  /* height: 30px; */
+  height: 50px;
   margin: 0px 5px;
   display: flex;
   flex-direction: row;
   align-items: center;
+
 }
 .list-group-item.active {
   background-color: #e0ecff;
@@ -266,8 +263,8 @@ export default {
   border: 1px solid #95b8e7;
 }
 
-.list-group-item + .list-group-item {
-  margin-top: 5px;
+.list-group-item2 + .list-group-item2 {
+  margin-top: 2px;
 }
 .ivu-icon-md-close:before {
   content: "X";

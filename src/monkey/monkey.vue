@@ -7,12 +7,8 @@
         <Icon type="ios-arrow-down"></Icon>
         </div>
         <DropdownMenu slot="list">
-          <DropdownItem name="add">
-            新增腳本
-          </DropdownItem>
-          <DropdownItem name="另存腳本" v-if="editItem != null">
-            另存腳本
-          </DropdownItem>
+          <DropdownItem name="add">新增腳本</DropdownItem>
+          <!-- <DropdownItem name="另存腳本" v-if="editItem != null">另存腳本</DropdownItem> -->
           <DropdownItem name="delete" v-if="editItem != null">
             刪除腳本
           </DropdownItem>
@@ -122,6 +118,8 @@ export default {
         this.x = -1;
         this.y = -1;
         this.onResize();
+        this.$refs["script"].reset();
+        this.cursor = null;
       };
 
       this.$refs["img"].onmousedown = (e) => {
@@ -434,7 +432,7 @@ export default {
         }
 
         if (typeof el.title === "string" && s2.length > 0)
-          s2 = "#" + el.title + "\n" + s2;
+          s2 = "### " + el.title + " ###\n" + s2 + "";
 
         return s2
       }
@@ -622,11 +620,49 @@ div, span {
 #cursor {
   display: inline-block;
   background-color: rgba(192, 25, 33, 0.3);
-  
   position: absolute;
   animation: mymove 5s infinite;
   cursor: move;
 }
+#cursor::after{
+  position: absolute;
+  left: calc(50%);  
+  top: 0px;  
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 100%;
+  background-color: white;
+}
+#cursor::before{
+  position: absolute;
+  left: 0px;  
+  top: calc(50%);  
+  content: '';
+  display: inline-block;
+  width: 100%;
+  height: 1px;
+  /* border-radius: 2px; */
+  background-color: white;
+}
+@keyframes mymove {
+  0% {
+    background-color: rgb(192, 25, 33, 0.1);
+    border-color: rgb(192, 25, 33, 1)
+  }
+  50% {
+    background-color: rgb(192, 25, 33, 0.25);
+    border-color: rgb(192, 25, 33, 0.5)
+  }
+  100% {
+    background-color: rgb(0, 100, 255, 0.5);
+   border-color: rgb(0, 0, 255, 1)
+  }
+}
+/* #cursor:hover {
+  background-color: transparent !important;
+  border-color: black !important;
+} */
 .ivu-dropdown-rel{
   font-size: 16px;
 }
@@ -637,14 +673,5 @@ div, span {
 .ivu-dropdown-item-divided:before {
   margin: 0 -10px
 }
-@keyframes mymove {
-  from {
-    background-color: rgb(192,192,192, 0.3);
-    border-color: rgb(192, 25, 33)
-  }
-  to {
-    background-color:rgba(192, 25, 33, 0.3);
-    border-color: rgb(192,192,192)
-  }
-}
+
 </style>

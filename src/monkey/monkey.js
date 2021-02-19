@@ -4,6 +4,7 @@ import Vue from 'vue'
 import Monkey from './monkey.vue';
 import iView from "iview";
 import "iview/dist/styles/iview.css";
+// console.log(Electron)
 
 Vue.use(iView);
 Vue.config.productionTip = false;

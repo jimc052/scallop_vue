@@ -56,7 +56,9 @@ export default {
       stdout: "",
     };
   },
-  mounted() {},
+  mounted() {
+    // this.onResize();
+  },
   methods: {
     async onOK() {
       this.stdout +=
@@ -104,14 +106,22 @@ export default {
         this.$emit("on-close");
       }
     },
+    onResize() {
+      this.width = document.body.clientWidth - 200;
+      this.height = document.body.clientHeight - 300;
+    }
   },
   watch: {
     script(value) {
       this.visible = value.length > 0 ? true : false;
       this.stdout = "";
+      if(this.visible == true) {
+        this.onResize();
+        this.broadcast.$on("on-resize", this.onResize);
+      } else {
+        this.broadcast.$off("on-resize", this.onResize);
+      }
     },
   },
 };
 </script>
-<style>
-</style>
