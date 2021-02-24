@@ -8,14 +8,17 @@
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
     "build": "node build/build.js  && npm run copy1 && npm run copy2",
-    "copy1": "mkdir /Users/jimc/Electron/scallop_vue/dist/static/css/static && mv /Users/jimc/Electron/scallop_vue/dist/static/fonts /Users/jimc/Electron/scallop_vue/dist/static/css/static/fonts", 
+    "copy1": "mkdir /Users/jimc/Electron/scallop_vue/dist/static/css/static && mv /Users/jimc/Electron/scallop_vue/dist/static/fonts /Users/jimc/Electron/scallop_vue/dist/static/css/static/fonts",
     "copy2": "cp -R /Users/jimc/Electron/scallop_vue/dist/*.html /Users/jimc/git.io/jimc052.github.io/shell/ && cp -R /Users/jimc/Electron/scallop_vue/dist/static /Users/jimc/git.io/jimc052.github.io/shell/"
   },
   "dependencies": {
     "iview": "3.3.1",
     "sortablejs": "1.13.0",
     "vue": "^2.6.11",
-    "vuedraggable": "2.24.3"
+    "vuedraggable": "2.24.3",
+    "codemirror": "^5.49.2",
+    "jsonlint": "^1.6.3",
+    "script-loader": "^0.7.2"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

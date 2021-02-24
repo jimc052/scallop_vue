@@ -1,13 +1,25 @@
-// The Vue build version to load with the `import` command
-// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import ADB from './adb.vue'
+import Vue from 'vue';
+import ADB from './adb.vue';
+import iView from "iview";
+import "iview/dist/styles/iview.css";
+import locale from 'iview/src/locale/lang/zh-TW';
 
-Vue.config.productionTip = false
+Vue.use(iView, { locale });
 
-console.log(ADB)
+Vue.config.productionTip = false;
+Vue.prototype.broadcast = new Vue(); // 廣播用元件
+Vue.prototype.$isElectron = navigator.userAgent.indexOf("Electron") > -1;
+
 new Vue({
-  el: '#adb',
+  el: '#app',
   components: { ADB },
-  template: '<ADB />'
+  template: '<ADB />',
+  mounted() {
+    window.onresize = () => {
+      return (() => {
+        // self.screenWidth = document.body.clientWidth;
+        this.broadcast.$emit("on-resize");
+      })();
+    };
+  }
 })

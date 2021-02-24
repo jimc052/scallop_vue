@@ -4,8 +4,9 @@ import Vue from 'vue';
 import Explore from './explore.vue';
 import iView from "iview";
 import "iview/dist/styles/iview.css";
+import locale from 'iview/src/locale/lang/zh-TW';
 
-Vue.use(iView);
+Vue.use(iView, { locale });
 Vue.config.productionTip = false;
 Vue.prototype.broadcast = new Vue(); // 廣播用元件
 Vue.prototype.$isElectron = navigator.userAgent.indexOf("Electron") > -1;

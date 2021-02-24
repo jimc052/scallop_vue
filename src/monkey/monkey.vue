@@ -30,8 +30,7 @@
     <div id="frame">
       <div id="left" :style="{height: (src.length == 0 ? '100%' : (height + 'px'))}" style="background: rgb(32,32,32)">
         <div id="imgframe" 
-          style="flex: 1; display: flex; flex-direction: column; justify-content: center;
-            align-items: center;"
+          style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;"
         >
           <div style="position: relative">
             <img id="img" ref="img" :src="src" :width="width + 'px'" />
@@ -490,7 +489,6 @@ export default {
               alert(e)
             }
           } else {
-
           }
         },
       });

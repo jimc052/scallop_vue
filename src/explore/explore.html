@@ -4,10 +4,44 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>File Explore</title>
-    <script src="../../static/system/system.js"></script>
-    <script src="../../static/system/shell.js"></script>
   </head>
   <body>
     <div id="explore"></div>
   </body>
+  <script>
+    window.onload = async function(){
+      let root = location.href.indexOf("localhost") ? "../../" : "./";
+      if(location.href.indexOf("localhost") > -1) {
+        await loadScript(root + "static/system/system.js");
+        if(navigator.userAgent.indexOf("Electron") > -1)
+          await loadScript(root + "static/system/shell.js")
+      }
+    }
+
+    let loadScript = function(filename ){
+      return new Promise( async (success, error) => {
+        if (filename.indexOf(".css") > 1){ //if filename is an external CSS file
+          let fileref=document.createElement("link");
+          fileref.setAttribute("rel", "stylesheet");
+          fileref.setAttribute("type", "text/css");
+          fileref.setAttribute("href", filename);
+          if(typeof fileref!="undefined")
+            document.getElementsByTagName("head")[0].appendChild(fileref)
+          success();
+        } else if (filename.indexOf(".js") > 1){
+          let script   = document.createElement("script");
+          script.type  = "text/javascript";
+          script.src   = filename;
+          if(typeof script != "undefined"){
+            script.onload = function(){
+              success();
+            };
+            document.getElementsByTagName("head")[0].appendChild(script);
+          } 
+        } else {
+          error("error!" + filename)
+        }
+      });
+    };
+  </script>
 </html>
