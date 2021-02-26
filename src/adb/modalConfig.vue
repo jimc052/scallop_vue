@@ -3,9 +3,11 @@
     @on-visible-change="onVisibleChange" :closable="false"
     fullscreen
   >
-    <div class="json-editor" style="overflow: hidden;"> 
-      <textarea ref="textarea" />
-    </div>
+    <codemirror :options="cmOptions" ref="editor" style="height: 100%;"
+      @ready="onCmReady"
+      @focus="onCmFocus"
+      @input="onCmCodeChange"
+    />
     <div slot="footer" >
       <i-button type="error" @click="$emit('on-close')">取消</i-button>
       <i-button v-if="dirty" type="primary" @click="onOK">確定</i-button>
@@ -13,7 +15,7 @@
   </modal>
 </template>
 <script>
-import CodeMirror from "codemirror";
+import { codemirror } from "vue-codemirror";
 import "codemirror/addon/lint/lint.css";
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/monokai.css"; // 主題顯示，可以百度搜索其他的主題
@@ -31,57 +33,58 @@ import 'codemirror/addon/fold/comment-fold.js';
 export default {
   name: 'ModalConfig',
   props: ["visible", "config"],
-  components: {CodeMirror},
+  components: {codemirror},
   data () {
     return {
       dirty: false,
-      value: "{}"
+      cmOptions: {
+        lineNumbers: true, // 是否顯示行數
+        mode: "application/json",
+        theme: "monokai", // 主題
+        lint: true,
+        styleActiveLine: true, // 当前行背景高亮
+        matchBrackets: true, // 括号匹配
+        theme: "monokai",
+        autoCloseTags: true,
+        autofocus: true,
+        lineWrapping: true /*自动换行*/,
+        indentUnit: 2 /*设置缩进的字符数，默认为2*/,
+        indentWithTabs: true,
+        smartIndent: true /*自动缩进，默认为true*/,
+        tabSize: 2 /*tab字符的宽度，默认为4*/,
+        lineWiseCopyCut: false,
+        foldGutter: true,
+        lint: true,
+        gutters: [
+          "CodeMirror-linenumbers",
+          "CodeMirror-foldgutter",
+          "CodeMirror-lint-markers",
+        ],
+      },
     }
   },
   async mounted() {
-    // this.value = this.config;
     
-    this.codeMirror = CodeMirror.fromTextArea(this.$refs.textarea, {
-      lineNumbers: true, // 是否顯示行數
-      mode: "application/json",
-      theme: "monokai", // 主題
-      lint: true,
-      styleActiveLine: true, // 当前行背景高亮
-      matchBrackets: true,   // 括号匹配
-      theme: "monokai",
-      autoCloseTags: true,
-      lineWrapping: true, /*自动换行*/
-      indentUnit: 2,   /*设置缩进的字符数，默认为2*/
-      indentWithTabs: true,
-      smartIndent: true, /*自动缩进，默认为true*/
-      tabSize: 2, /*tab字符的宽度，默认为4*/
-      lineWiseCopyCut: false,  /*true时，如果当前没有选中文本，会自动选中当前行*/
-      dragDrop: true,   /*是否可以被拖拽*/
-      autofocus: true,
-      // keyMap: "sublime",
-      foldGutter: true,
-      lint: true,
-      gutters: [
-        "CodeMirror-linenumbers", 
-        "CodeMirror-foldgutter", "CodeMirror-lint-markers"
-      ],
-    });
-
-    setTimeout(()=>{
-      this.codeMirror.setValue(this.value);
-      this.codeMirror.focus();
-      this.codeMirror.on("change", cm => {
-        this.dirty = true;
-      });    
-    }, 600)
   },
   methods: {
+    onCmReady(cm) {
+      cm.focus();
+      this.editor = cm;
+    },
+    onCmFocus(cm) {
+      // console.log('the editor is focus!', cm)
+    },
+    onCmCodeChange(newCode) {
+      this.dirty = true;
+    },
     onOK(){
-      console.log(cm.getValue())
+      console.log(this.editor.getValue())
     },
     onVisibleChange(v) {
+      this.dirty = false;
       if (v === false) {
         this.$emit("on-close");
+      } else {
       }
     },
   },
@@ -89,34 +92,56 @@ export default {
     visible(value){
     },
     config(value) {
-      // this.codeMirror.setValue(JSON.stringify(value, null, 2));
-      // this.codeMirror.focus();
+      if(typeof value == "undefined") {
+        this.editor.setValue("");
+      } else {
+        /*
+        "nodeKey": 6,
+			  "expand": true,
+			  "selected": true
+        */
+        let json = recursion(value);
+        this.editor.setValue(JSON.stringify(json, null, "\t"))
+      }
+
+      function recursion(json){
+        let obj = {};
+        for(let key in json) {
+          if("nodeKey,expand,selected".indexOf(key) > -1)
+            continue;
+          else if(Array.isArray(json[key])) {
+            let arr = [];
+            for(let i = 0; i < json[key].length; i++){
+              let obj2 = recursion(json[key][i]);
+              console.log(obj2)
+              arr.push(obj2);
+            }
+            obj[key] = arr;
+          } else if(typeof json[key] == "string" || typeof json[key] == "number" || typeof json[key] == "boolean") {
+            obj[key] = json[key]
+          } else if(typeof json[key] == "object"){
+            obj[key] = recursion(json[key])
+          }
+        }
+        return obj;
+      }
     }
-  }
+  },
+  
 }
 </script>
 <style>
 .CodeMirror {
   height: 100%;
-  font-family: monospace  !important;
+  /* font-family: monospace  !important; */
 }
+.CodeMirror * {
+  font-family: Arial, monospace;
+  font-size: 18px;
+}
+
 .ivu-modal-body {
-  padding: 0px 5px !important;
+  padding: 0px 0px !important;
   overflow: hidden !important;
-}
-.json-editor {
-  height: 100%;
-  position: relative;
-  margin-top: 8px;
-}
-.json-editor >>> .CodeMirror {
-  height: 100%;
-  min-height: 300px;
-}
-.json-editor >>> .CodeMirror-scroll {
-  min-height: 300px;
-}
-.json-editor >>> .cm-s-rubyblue span.cm-string {
-  color: #f08047;
 }
 </style>

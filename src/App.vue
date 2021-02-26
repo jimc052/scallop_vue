@@ -1,12 +1,5 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <i-select v-model="interval" style="width: 80px; margin-right: 10px">
-        <i-option v-for="item in intervals" :value="item" :key="item">{{
-          item + " 秒"
-        }}</i-option>
-      </i-select>
-      <i-button type="primary" @click="onOK">確定</i-button>
   </div>
 </template>
 

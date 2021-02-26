@@ -86,9 +86,7 @@ export default {
                   ? "第 " + (i + 1) + " 次(" + d2.toString("hh:MM:ss") + ")："
                   : "");
               setTimeout(() => {
-                this.$refs["textarea"].scrollTop = this.$refs[
-                  "textarea"
-                ].scrollHeight;
+                this.$refs["textarea"].scrollTop = this.$refs["textarea"].scrollHeight;
               }, 600);
             },
           });

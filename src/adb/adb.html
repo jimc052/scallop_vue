@@ -10,6 +10,7 @@
   </body>
   <script>
     window.onload = async function(){
+      localStorage["scallop-index"] = "adb.html";
       let root = location.href.indexOf("localhost") ? "../../" : "./";
       if(location.href.indexOf("localhost") > -1) {
         await loadScript(root + "static/system/system.js");

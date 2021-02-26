@@ -17,7 +17,6 @@ new Vue({
   mounted() {
     window.onresize = () => {
       return (() => {
-        // self.screenWidth = document.body.clientWidth;
         this.broadcast.$emit("on-resize");
       })();
     };

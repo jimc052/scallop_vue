@@ -7,6 +7,16 @@
   </head>
   <body>
     <div id="app"></div>
-    <!-- built files will be auto injected -->
   </body>
+  <script>
+    let x = localStorage["scallop-index"];
+    if(typeof x == "string") {
+      if(navigator.userAgent.indexOf("Electron") > -1) {
+
+      } else {
+        location.assign(x);
+      }
+    }
+
+  </script>
 </html>
