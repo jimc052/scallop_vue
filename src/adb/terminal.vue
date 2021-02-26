@@ -12,7 +12,9 @@
 </template>
 
 <script>
-let { exec, spawn } = require('child_process');
+// let { exec, spawn } = require('child_process');
+// let spawn = require("child_process").spawn;
+// console.log(typeof window.spawn)
 
 export default {
   name: 'Terminal',
@@ -29,40 +31,36 @@ export default {
   },
   async mounted() {
     this.addHistory("cwd");
-    
     this.broadcast.$on('term-execute',  this.execute);
   },
   destroyed() {
     if(typeof this.pid != "undefined")
-      process.kill(this.pid);
+      window.process.kill(this.pid);
     this.broadcast.$off('term-execute');
   },
   methods: {
-    cwd(){
+    cwd(){ //  沒效。。。。。。。。。。。
       return new Promise( async (success, error) => {
         if(this.$isElectron == false) {
           success("~")
-        } else if (process.platform == 'win32') {
+        } else if (window.process.platform == 'win32') { // 沒寫
           let directoryRegex = /([a-zA-Z]:[^\:\[\]\?\"\<\>\|]+)/mi;
-          if (action && action.data) {
-              let path = directoryRegex.exec(action.data);
-              if(path){
-                success(path[0]); // 還沒測過
-              }
-          }
+          
         } else {
-          exec(`lsof -p ${pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9-`, (err, cwd) => {
+          window.child_process.exec(`lsof -p | grep cwd | tr -s ' ' | cut -d ' ' -f9-`, (err, cwd) => {
+            console.log(cwd)
             success(cwd.trim());
           });
         }
       });
     },
     async execute(title, commands) {
+      console.log(commands)
       this.processing = true;
       if(title != this.title) return;
       let arr = commands.split("&&"), results = "";
       for(let i = 0; i < arr.length; i++) {
-        console.log(arr[i])
+        // console.log(arr[i])
         try {
           await this.exeCmd(arr[i]);
           this.addHistory("cwd");
@@ -72,33 +70,37 @@ export default {
         }
       }
       this.processing = false;
+      this.broadcast.$emit("term-finish")
     },
     exeCmd(command) {
       return new Promise( async (success, error) => {
-        console.log(command)
+        // console.log(command)
         this.addHistory(command.trim(), "\n");
         if(this.$isElectron== true){
           let arr = command.trim().split(" "), result = "";
           let cmd = arr[0];
           arr.splice(0, 1);
 
-          let bat = spawn(cmd, arr);
+          let bat = window.child_process.spawn(cmd, arr);
           bat.stdout.on("data", (data) => {
-            console.log(data.toString())
+            console.log("stdout: " + data.toString())
             this.addHistory(data.toString());
           });
 
           bat.stderr.on("data", async (err) => {
-            process.kill(bat.pid);
+            window.process.kill(bat.pid);
             error(err.toString())
             this.addHistory(err.toString());
             this.addHistory("\n", "cwd");
           });
 
           bat.on("exit", async (code) => {
+            this.pid = undefined;
+            console.log("exit.......")
             success(result)
             this.addHistory("\n", "cwd");
           });
+          this.pid = bat.pid
         } else {
           success();
         }

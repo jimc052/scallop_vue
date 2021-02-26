@@ -5,6 +5,7 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
   if (!fs.existsSync(sharedObj.path)) {
     fs.mkdirSync(sharedObj.path);
   }
+  window.process = process;
 
   window.path = sharedObj.path + sharedObj.separator + "monkey-script";
   if (!fs.existsSync(window.path)) {
@@ -47,6 +48,9 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
       });  
     });
   };
+
+  window.child_process = { spawn, exec } = require("child_process")
+  // console.log(window.child_process)
 
   window.checkDevice = () => {
     return new Promise( async (success, error) => {
@@ -171,3 +175,5 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
     // window.app = app; window.ipc = ipc; window.clipboard = clipboard;
     // window.fs = require("fs"), window.os = require('os');
     // // console.log(fs)
+
+  console.log(window.process.env.USER)

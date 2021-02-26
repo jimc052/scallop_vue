@@ -1,5 +1,5 @@
 <template>
-  <modal v-model="visible" title="配置" class-name="vertical-center-modal" 
+  <modal id='modalConfig' v-model="visible" title="配置" class-name="vertical-center-modal" 
     @on-visible-change="onVisibleChange" :closable="false"
     fullscreen
   >
@@ -95,11 +95,6 @@ export default {
       if(typeof value == "undefined") {
         this.editor.setValue("");
       } else {
-        /*
-        "nodeKey": 6,
-			  "expand": true,
-			  "selected": true
-        */
         let json = recursion(value);
         this.editor.setValue(JSON.stringify(json, null, "\t"))
       }
@@ -140,7 +135,7 @@ export default {
   font-size: 18px;
 }
 
-.ivu-modal-body {
+#modalConfig .ivu-modal-body {
   padding: 0px 0px !important;
   overflow: hidden !important;
 }

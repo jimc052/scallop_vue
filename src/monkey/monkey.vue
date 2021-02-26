@@ -454,7 +454,7 @@ export default {
     },
     onOpenMondalInsert(){
       let list = [], slef = this;
-       this.playList.forEach((item, index)=>{
+      this.playList.forEach((item, index)=>{
          if(index > 0) {
            if(item.project == this.editItem.project && item.device == this.editItem.device)
             list.push(item)
