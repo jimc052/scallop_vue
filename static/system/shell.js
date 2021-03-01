@@ -176,4 +176,4 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
     // window.fs = require("fs"), window.os = require('os');
     // // console.log(fs)
 
-  console.log(window.process.env.USER)
+  // console.log(window.process.env.USER, window.process)

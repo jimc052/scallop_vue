@@ -79,6 +79,12 @@ export default {
     },
     onOK(){
       console.log(this.editor.getValue())
+      try {
+        let json = JSON.parse(this.editor.getValue());
+        this.$emit("on-close", json);
+      } catch(e) {
+
+      }
     },
     onVisibleChange(v) {
       this.dirty = false;
@@ -108,7 +114,6 @@ export default {
             let arr = [];
             for(let i = 0; i < json[key].length; i++){
               let obj2 = recursion(json[key][i]);
-              console.log(obj2)
               arr.push(obj2);
             }
             obj[key] = arr;

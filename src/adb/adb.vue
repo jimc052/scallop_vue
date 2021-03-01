@@ -2,7 +2,10 @@
   <div id="app" style="display: flex; flex-direction: column; align-items: stretch; justify-content: end">
     <div style="background: #2d8cf0; display: flex; flex-direction: row; justify-content: start; align-items: center;">
       <div style="flex: 1; text-align: left; color: white; padding: 5px; ">
-        指令集
+        {{"指令集"}}
+        <span @click="projectPicker" v-if="project != null" style="cursor: pointer;">
+          {{"[" + project.project + "]"}}
+        </span>
       </div>
       <Icon type="md-cog" class="btn" @click.native="visible=true"></Icon>
       <Icon type="md-close" class="btn" @click.native="onClickIcon"></Icon>
@@ -11,7 +14,7 @@
     <div  style="flex: 1;">
       <Split v-model="split1"  @on-move-end="onMoveEnd">
         <div slot="left" id="left" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
-          <Tree :data="config.commands" style="z-index: -1" @on-select-change="onSelectChange" 
+          <Tree :data="config.commands.concat(config.database)" style="z-index: -1" @on-select-change="onSelectChange" 
             :render="renderTreeItem" />
           <!--  -->
         </div>
@@ -50,6 +53,7 @@ export default {
       tabIndex: 1,
       tabCurr: "1",
       height: 0,
+      project: null,
       config: {
         projects: [
           {project: "BiPOS", package: "com.bipos", folder: "~/Documents/Project/BiPOS2", apk: "/release/BiPOS2-release.apk"},
@@ -58,9 +62,13 @@ export default {
           {project: "JabezDC", package: "com.jabezdc", folder: "~/react-native/jabezdc/android", apk: "/app/build/outputs/apk/release/JabezDC.apk"},
         ],
         database: [
-          {name: "正式區"},
-          {name: "測試區"},
-          {name: "77區"}
+          {title: "資料庫設定", expand: true,
+            children: [
+              {title: "正式區", role: "database"},
+              {title: "測試區", role: "database"},
+              {title: "77區", role: "database"}
+            ]
+          }
         ],
         commands: [
           {title: "app 專案", icon: "logo-android", expand: true,
@@ -77,8 +85,6 @@ export default {
             {title: "擷取畫面", cmd: "adb shell screencap -p /sdcard/Download/screencap.png && adb pull /sdcard/Download/screencap.png ~/Downloads && open ~/Downloads && adb shell rm /sdcard/Download/screencap.png"},
           ]},
           {title: "資料庫複製", icon: "md-redo", role: "database-replicate"},
-          {title: "ls", cmd: "ls"},
-          {title: "pwd", cmd: "cd ~/Temp && pwd"},
           {title: "清除終端機", role: "clear"},
         ]
       },
@@ -93,8 +99,17 @@ export default {
       
     }
     let x = localStorage["adb-config"];
-    if(typeof x == "string" && x.length > 0)
-      this.config = JSON.parse(x); 
+    if(typeof x == "string" && x.length > 0) {
+      this.config = JSON.parse(x);
+    }
+    x = localStorage["adb-project"]; 
+    if(typeof x == "string" && x.length > 0) {
+      let arr = this.config.projects.filter(item=>{
+        return item.project == x;
+      });
+      if(arr.length == 1) this.project = arr[0]
+    }
+
     // else {
     //   this.visible = true;
     // }
@@ -121,8 +136,13 @@ export default {
       alert("還沒寫，只作測試用，" + this.tabCurr)
       // console.log(this.$refs["term-" + this.tabCurr])
     },
-    closeModal(){
+    closeModal(data){
+      if(typeof data != "undefined"){
+        localStorage["adb-config"] = JSON.stringify(data);
+        this.config = data;
+      }
       this.visible = false;
+
     },
     onSelectChange(node) { // 
       let self = this;
@@ -130,11 +150,21 @@ export default {
       if(typeof node.children == "undefined") {
         if(typeof node.cmd == "string" && node.cmd.trim().length > 0) {
           if(node.cmd.indexOf("{project.") > -1) {
-            openModal(node.cmd)
+            if(this.project == null) {
+              this.projectPicker(()=>{
+                setProject(node.cmd);
+              })
+            } else {
+              setProject(node.cmd);
+            }
+            // openModal(node.cmd)
           } else
             execute(node.cmd)
         } else if(typeof node.role == "string") {
-          alert("role: " + node.role)
+          if(node.role == "clear")
+            execute(node.role)
+          else
+            alert("role: " + node.role)
         }
       }
       
@@ -166,38 +196,42 @@ export default {
         }
       }
       function execute(cmd) {
-        console.log(cmd)
         cmd = cmd.replace(new RegExp("~/","gm"), "/Users/" + window.process.env.USER + "/");
-        console.log(cmd)
         processing = true;
         self.broadcast.$emit("term-execute", self.tabCurr, cmd);
       }
-      function openModal(cmd) {       
-        self.$Modal.info({
-          title: "專案清單",
-          width: 300,
-          render: (h) => {
-            return h(ModalProject, {
-                props: {
-                  list: self.config.projects
-                },
-                on: {
-                  rowClick: (value) => {
-                    for(let key in value) {
-                      if(key == "project")
-                        continue;
-                      else {
-                        cmd = cmd.replace(new RegExp("{project." + key + "}","gm"), value[key])
-                      }
-                    }
-                    execute(cmd)
-                    self.$Modal.remove();
-                  }
-                }
-            })
-          },
-        })
+      function setProject(cmd) {       
+        for(let key in self.project) {
+          if(key == "project")
+            continue;
+          else {
+            cmd = cmd.replace(new RegExp("{project." + key + "}","gm"), self.project[key])
+          }
+        }
+        execute(cmd)
       }
+    },
+    projectPicker(callback){
+      let self = this;
+      this.$Modal.info({
+        title: "專案清單",
+        width: 300,
+        render: (h) => {
+          return h(ModalProject, {
+              props: {
+                list: self.config.projects
+              },
+              on: {
+                rowClick: (value) => {
+                  self.project = value;
+                  localStorage["adb-project"] = value.project;
+                  if(typeof callback == "function") callback();
+                  self.$Modal.remove();
+                }
+              }
+          })
+        },
+      })
     },
     executeFinish(){
       processing = false;

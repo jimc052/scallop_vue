@@ -1,21 +1,14 @@
 <template>
   <div class="term-frame" :style="{height: height + ('px'), position: 'relative'}">
-    <div class="demo-spin-container" v-if="processing">
-      <spin fix>
-          <icon type="ios-loading" size=18 class="demo-spin-icon-load"></icon>
-      </spin>
-    </div>
-    <div class="term" ref="term" contenteditable="true" v-html="history">
+    <div class="term" :id="id" ref="term" v-html="history">
       {{history}}
     </div>
   </div>
 </template>
 
 <script>
-// let { exec, spawn } = require('child_process');
-// let spawn = require("child_process").spawn;
-// console.log(typeof window.spawn)
-
+let waiting = '<i class="demo-spin-icon-load ivu-icon ivu-icon-ios-loading" style="font-size: 18px; margin-left: 2px;"></i>'
+let cursor = "<span class='term-cursor' />"
 export default {
   name: 'Terminal',
   components: {
@@ -25,13 +18,24 @@ export default {
     return {
       history: "",
       processing: false,
+      id: "term" + (new Date()).getTime()
       // cwd: ""
       // height: document.body.clientHeight - 300,
     };
   },
   async mounted() {
-    this.addHistory("cwd");
+    this.addHistory("cwd", "cursor");
     this.broadcast.$on('term-execute',  this.execute);
+    // console.log("cwd: " + await this.cwd())
+    // setTimeout(()=>{
+    //   let term = document.querySelector("#" + this.id)
+    //   let cursor = document.querySelectorAll("#" + this.id + " .term-cursor")
+    //   for(let i = cursor.length - 1; i >= 0; i--) {
+    //     console.log(i, cursor[i])
+    //     let x = term.removeChild(cursor[i])
+    //     console.log(x)
+    //   }
+    // }, 3000);
   },
   destroyed() {
     if(typeof this.pid != "undefined")
@@ -39,33 +43,40 @@ export default {
     this.broadcast.$off('term-execute');
   },
   methods: {
-    cwd(){ //  沒效。。。。。。。。。。。
+    cwd(){ // MacOS 測過了 OK，但沒在用
       return new Promise( async (success, error) => {
         if(this.$isElectron == false) {
           success("~")
-        } else if (window.process.platform == 'win32') { // 沒寫
-          let directoryRegex = /([a-zA-Z]:[^\:\[\]\?\"\<\>\|]+)/mi;
-          
+        } else if (window.process.platform == 'win32') { // copy 自 hyper-history, 但沒改，可能不能用
+          // if (action && action.data) {
+          //     let path = directoryRegex.exec(action.data);
+          //     if(path){
+          //       currCwd = path[0];
+          //     }
+          // }
         } else {
-          window.child_process.exec(`lsof -p | grep cwd | tr -s ' ' | cut -d ' ' -f9-`, (err, cwd) => {
-            console.log(cwd)
+          window.child_process.exec(`lsof -p ${window.process.pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9-`, (err, cwd) => {
             success(cwd.trim());
           });
         }
       });
     },
     async execute(title, commands) {
-      console.log(commands)
-      this.processing = true;
       if(title != this.title) return;
+      console.log(commands)
+      if(commands == "clear") {
+        this.history = "";
+        this.addHistory("cwd", "cursor");
+        this.broadcast.$emit("term-finish")
+        return;
+      }
+      this.processing = true;
       let arr = commands.split("&&"), results = "";
       for(let i = 0; i < arr.length; i++) {
         // console.log(arr[i])
         try {
           await this.exeCmd(arr[i]);
-          this.addHistory("cwd");
         } catch(e) {
-          this.addHistory("cwd");
           break;
         }
       }
@@ -73,34 +84,42 @@ export default {
       this.broadcast.$emit("term-finish")
     },
     exeCmd(command) {
+      this.history = this.history.replace(cursor, "")
+
       return new Promise( async (success, error) => {
         // console.log(command)
-        this.addHistory(command.trim(), "\n");
+        this.addHistory(command.trim(), "waiting", "\n");
         if(this.$isElectron== true){
           let arr = command.trim().split(" "), result = "";
           let cmd = arr[0];
           arr.splice(0, 1);
 
           let bat = window.child_process.spawn(cmd, arr);
+          this.pid = bat.pid;
           bat.stdout.on("data", (data) => {
             console.log("stdout: " + data.toString())
+            
             this.addHistory(data.toString());
           });
 
           bat.stderr.on("data", async (err) => {
             window.process.kill(bat.pid);
-            error(err.toString())
-            this.addHistory(err.toString());
-            this.addHistory("\n", "cwd");
+            this.pid = undefined;
+            error(err.toString());
+            this.history = this.history.replace(waiting, "");
+            this.addHistory({error: err.toString()});
+            this.addHistory("\n", "cwd", "cursor");
           });
 
           bat.on("exit", async (code) => {
-            this.pid = undefined;
-            console.log("exit.......")
-            success(result)
-            this.addHistory("\n", "cwd");
+            if(typeof this.pid != "undefined") {
+              this.history = this.history.replace(waiting, "");
+              this.pid = undefined;
+              console.log("exit.......")
+              success(result)   
+              this.addHistory("cwd", "cursor");
+            }
           });
-          this.pid = bat.pid
         } else {
           success();
         }
@@ -108,16 +127,23 @@ export default {
     },
     addHistory(){
       for(let i = 0; i < arguments.length; i++){
-        if(arguments[i] == "cwd") {
-          this.history += "~ $ "
+        console.log(i + ": '" + arguments[i] + "'")
+        if(typeof arguments[i].error == "string") {
+          this.history += "<span class='term-error' >" + arguments[i].error + "</span>";
+        } else if(arguments[i] == "cwd") {
+          this.history += "<span class='term-cwd' >~ $ </span>"
+        } else if(arguments[i] == "cursor") {
+          this.history += cursor;
+        } else if(arguments[i] == "waiting") {
+          this.history += waiting;
         } else {
-          this.history += arguments[i].replace(new RegExp("\n","gm"),"<br/>")
+          this.history += "<span>" + arguments[i].replace(new RegExp("\n","gm"),"<br/>") + "</span>"
         }
       }
       setTimeout(()=>{
         this.$refs["term"].scrollTop = this.$refs["term"].scrollHeight;
       }, 300)
-    },
+    }
   },
   watch: {
     // command(value) {}
@@ -138,6 +164,21 @@ export default {
   font-family: Arial, monospace;
   font-size: 18px;
 }
+.term-cwd {
+  font: inherit;
+  color: yellow;
+}
+.term-error {
+  font: inherit;
+  color: red;
+}
+.term-cursor {
+  width: 10px;
+  height: 16px;
+  margin-bottom: -2px;
+  display: inline-block;
+  background-color: white;
+}
 .demo-spin-container{
   top: 0px;
   right: 0px;
@@ -151,6 +192,9 @@ export default {
 }
 .demo-spin-icon-load{
     animation: ani-demo-spin 1s linear infinite;
+}
+.demo-split-pane {
+  padding: 5px 5px 5px 10px;
 }
 @keyframes ani-demo-spin {
     from { transform: rotate(0deg);}
