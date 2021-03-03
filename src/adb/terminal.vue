@@ -7,7 +7,7 @@
 </template>
 
 <script>
-let waiting = '<i class="demo-spin-icon-load ivu-icon ivu-icon-ios-loading" style="font-size: 18px; margin-left: 2px;"></i>'
+let waiting = '<i class="demo-spin-icon-load ivu-icon ivu-icon-ios-loading"></i>'
 let cursor = "<span class='term-cursor' />"
 export default {
   name: 'Terminal',
@@ -26,16 +26,6 @@ export default {
   async mounted() {
     this.addHistory("cwd", "cursor");
     this.broadcast.$on('term-execute',  this.execute);
-    // console.log("cwd: " + await this.cwd())
-    // setTimeout(()=>{
-    //   let term = document.querySelector("#" + this.id)
-    //   let cursor = document.querySelectorAll("#" + this.id + " .term-cursor")
-    //   for(let i = cursor.length - 1; i >= 0; i--) {
-    //     console.log(i, cursor[i])
-    //     let x = term.removeChild(cursor[i])
-    //     console.log(x)
-    //   }
-    // }, 3000);
   },
   destroyed() {
     if(typeof this.pid != "undefined")
@@ -98,7 +88,6 @@ export default {
           this.pid = bat.pid;
           bat.stdout.on("data", (data) => {
             console.log("stdout: " + data.toString())
-            
             this.addHistory(data.toString());
           });
 
@@ -121,6 +110,8 @@ export default {
             }
           });
         } else {
+          this.history = this.history.replace(waiting, "");
+          this.addHistory("cwd", "cursor");
           success();
         }
       });
@@ -179,19 +170,11 @@ export default {
   display: inline-block;
   background-color: white;
 }
-.demo-spin-container{
-  top: 0px;
-  right: 0px;
-  display: inline-block;
-  width: 30px;
-  height: 30px;
-  position: absolute;
-  /* border: 1px solid #eee; */
-  z-index: 99999;
-  background: transparent;
-}
+
 .demo-spin-icon-load{
-    animation: ani-demo-spin 1s linear infinite;
+  animation: ani-demo-spin 1s linear infinite;
+  margin-left: 10px;
+  font-size: 18px; 
 }
 .demo-split-pane {
   padding: 5px 5px 5px 10px;

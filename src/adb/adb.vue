@@ -7,7 +7,7 @@
           {{"[" + project.project + "]"}}
         </span>
       </div>
-      <Icon type="md-cog" class="btn" @click.native="visible=true"></Icon>
+      <Icon type="md-cog" class="btn" @click.native="visibleConfig=true"></Icon>
       <Icon type="md-close" class="btn" @click.native="onClickIcon"></Icon>
       <!-- https://www.iviewui.com/components/icon -->
     </div>
@@ -30,25 +30,37 @@
         </div>
       </Split>
     </div>
-    <ModalConfig ref="modal" :visible="visible" @on-close="closeModal" 
-      :config="visible == false ? undefined : config" />
+    <ModalConfig :visible="visibleConfig" @on-close="onCloseConfig" 
+      :config="visibleConfig == false ? undefined : config" />
+    <ModalDatabaseOption :visible="visibleDatabase" @on-close="onCloseDatabaseOption" />
   </div>
 </template>
 
 <script>
+import ModalDatabaseOption from "./modalDatabaseOption";
+import ModalDatabasePicker from "./modalDatabasePicker";
 import ModalConfig from "./modalConfig";
 import Terminal from "./terminal";
 import ModalProject from "./modalProject";
 let processing = false;
+let cols = [{title: "主機", key: "host"},
+  {title: "埠", key: "port"},
+  {title: "帳號", key: "user"},
+  {title: "密碼", key: "password"},
+  {title: "database", key: "database"},
+  {title: "sys_database", key: "sys_database"},
+]
 // https://www.iviewui.com/components/tree
 // https://www.iviewui.com/components/tabs
+// 清空 cache 目錄(還沒寫) /Users/jimc/Library/Application Support/scallop/TransportSecurity
 export default {
   name: 'ADB',
-  components: {ModalConfig, Terminal},
+  components: {ModalConfig, Terminal, ModalDatabaseOption},
   data () {
     return {
       split1: 0.3,
-      visible: false,
+      visibleConfig: false,
+      visibleDatabase: false, //this.$isElectron== true ? false : true,
       tabs: [{title: "1", id: 1}],
       tabIndex: 1,
       tabCurr: "1",
@@ -64,12 +76,32 @@ export default {
         database: [
           {title: "資料庫設定", expand: true,
             children: [
-              {title: "正式區", role: "database"},
-              {title: "測試區", role: "database"},
-              {title: "77區", role: "database"}
+              {title: "正式區", role: "database", port: 3306},
+              {title: "測試區", role: "database", port: 3306},
+              {title: "77區", role: "database", port: 3306}
             ]
-          }
+          },
+          {title: "資料庫複製", icon: "md-redo", role: "database-replicate"},
         ],
+        tables: {
+          SYS: ['SITES', 'USERS', 'USERGROUPS'],
+          BASE: ['APLSYS', 'TMMF', 'STKNAME', 'STOCK', 'SYSCOD', 'BAS_EMP', 'BAS_IO', 'BAS_IOGROUP', 'BAS_PTYPE', 
+            'BAS_PUBLIC', 'BAS_SER', 'CASHMF', 'CLEVEL', 'CODE', 'DPF_PLU2', 'DPF_PLU3', 'DPF_PLU4', 
+            'DPMF', 'F_PLU1', 'F_PLU12', 'F_PLU2', 'F_PLU23MF', 'F_PLU3', 'F_PLU4', 'F_TABMF', 'GPMF', 
+            'MGUIELEC', 'MGUIELEC_D', 'MGUIELEC_H', 'MGUIELEC_S', 'PADNAME', 'PAYMENT', 'PRN_TYPE', 'PSERVER', 
+            'PSERVER_LST', 'PSERVER_STORE',
+            'PRODUCT', 'PRODUCT_ORD', 'PRODUCT_RATE', 'FFDP', 'FFDPPLU', 'FFDP_HS', 'FFPLU', 'FFRTR', 
+            'PROMO_H', 'PROMO_I', 'SITES_JPC_PARAM', 'SITES_JPC_PARAM_D', 'SITES_PARAM', 
+            'SIZE', 'BAS_DESC2', 'BAS_DP'],
+          TRANSACTION: ['ADCAROUSEL', 'APPSITEMENU', 'BARCODE_FMT', 'BEACONPOS', 'BEACONTMPLIST', 'BGPMF', 
+            'BONUSLOG', 'BONUSMASTER', 'BULLETIN_BOARD', 'COLOR', 'FINDATA', 'HTRH', 'HTRI', 'IMPORT', 
+            'IITEM', 'IOAMT_H', 'IOAMT_I', 'MAKER', 'MAKER_C', 'MTAXH', 'MTAXI', 'PACK', 'POS_E', 
+            'POS_H', 'POS_HM', 'POS_I', 'PREPAIDRULE', 'QITEM', 'RECEPTION', 'RIITEM', 'RIMP', 
+            'SCHG_H', 'SCHG_I', 'TAKE_H', 'TAKE_I', 'TOITEM', 'TORDER', 'TRANS_2UBILL', 
+            'TRANS_EZPAYMENT', 'TRANS_IPASS', 'TRANS_IPASS_CR', 'TRANS_PMS', 'TRANS_UUPON', 
+            'VIPMF', 'VIPMF_LOG'
+          ]
+        },
         commands: [
           {title: "app 專案", icon: "logo-android", expand: true,
             children: [
@@ -84,7 +116,7 @@ export default {
             {title: "reverse(8081)", cmd: "adb reverse tcp:8081 tcp:8081"},
             {title: "擷取畫面", cmd: "adb shell screencap -p /sdcard/Download/screencap.png && adb pull /sdcard/Download/screencap.png ~/Downloads && open ~/Downloads && adb shell rm /sdcard/Download/screencap.png"},
           ]},
-          {title: "資料庫複製", icon: "md-redo", role: "database-replicate"},
+          
           {title: "清除終端機", role: "clear"},
         ]
       },
@@ -111,7 +143,7 @@ export default {
     }
 
     // else {
-    //   this.visible = true;
+    //   this.visibleConfig = true;
     // }
     this.broadcast.$on("on-resize", this.onResize);
     this.onResize();
@@ -136,15 +168,17 @@ export default {
       alert("還沒寫，只作測試用，" + this.tabCurr)
       // console.log(this.$refs["term-" + this.tabCurr])
     },
-    closeModal(data){
+    onCloseConfig(data){
       if(typeof data != "undefined"){
         localStorage["adb-config"] = JSON.stringify(data);
         this.config = data;
       }
-      this.visible = false;
+      this.visibleConfig = false;
+    },
+    onCloseDatabaseOption(data){ // not yet
 
     },
-    onSelectChange(node) { // 
+    onSelectChange(node) { // treeview click
       let self = this;
       if(processing == true) return;
       if(typeof node.children == "undefined") {
@@ -161,8 +195,13 @@ export default {
           } else
             execute(node.cmd)
         } else if(typeof node.role == "string") {
+          console.log(node)
           if(node.role == "clear")
             execute(node.role)
+          else if(node.role == "database-replicate")
+            self.visibleDatabase = true;
+          else if(node.role == "database")
+            self.databasePicker(node)
           else
             alert("role: " + node.role)
         }
@@ -196,7 +235,8 @@ export default {
         }
       }
       function execute(cmd) {
-        cmd = cmd.replace(new RegExp("~/","gm"), "/Users/" + window.process.env.USER + "/");
+        if(typeof window.process == "object")
+          cmd = cmd.replace(new RegExp("~/","gm"), "/Users/" + window.process.env.USER + "/");
         processing = true;
         self.broadcast.$emit("term-execute", self.tabCurr, cmd);
       }
@@ -224,7 +264,8 @@ export default {
               on: {
                 rowClick: (value) => {
                   self.project = value;
-                  localStorage["adb-project"] = value.project;
+                  if(this.$isElectron == false)
+                    localStorage["adb-project"] = value.project;
                   if(typeof callback == "function") callback();
                   self.$Modal.remove();
                 }
@@ -232,6 +273,32 @@ export default {
           })
         },
       })
+    },
+    databasePicker(database) {
+      let dirty = false;
+
+      this.$Modal.confirm({
+        title: "資料庫設定［" + database.title + "］",
+        width: 500,
+        render: (h) => {
+          return h(ModalDatabasePicker, {
+              props: {
+                database, 
+                cols
+              },
+              on: {
+                onChange: (value) => {
+                  dirty = true;
+                },
+              }
+          })
+        },
+        onOk: () => {
+          if(dirty == true) {
+            localStorage["adb-config"] = JSON.stringify(this.config);
+          }
+        },
+      });
     },
     executeFinish(){
       processing = false;

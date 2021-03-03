@@ -11,12 +11,10 @@
   <script>
     window.onload = async function(){
       localStorage["scallop-index"] = "adb.html";
-      let root = location.href.indexOf("localhost") ? "../../" : "./";
-      if(location.href.indexOf("localhost") > -1) {
-        await loadScript(root + "static/system/system.js");
-        if(navigator.userAgent.indexOf("Electron") > -1)
-          await loadScript(root + "static/system/shell.js")
-      }
+      let root = location.href.indexOf("localhost") > -1 ? "../../" : "./";
+      await loadScript(root + "static/system/system.js");
+      if(navigator.userAgent.indexOf("Electron") > -1)
+        await loadScript(root + "static/system/shell.js")
     }
 
     let loadScript = function(filename ){
@@ -44,5 +42,9 @@
         }
       });
     };
+
+    if(navigator.userAgent.indexOf("Electron") > -1) {
+      window.mysql = require('mysql');
+    }
   </script>
 </html>
