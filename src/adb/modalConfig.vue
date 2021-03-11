@@ -78,7 +78,7 @@ export default {
       this.dirty = true;
     },
     onOK(){
-      console.log(this.editor.getValue())
+      // console.log(this.editor.getValue())
       try {
         let json = JSON.parse(this.editor.getValue());
         this.$emit("on-close", json);
@@ -110,15 +110,15 @@ export default {
         for(let key in json) {
           if("nodeKey,expand,selected".indexOf(key) > -1)
             continue;
-          else if(Array.isArray(json[key])) {
+          else if(key == "tables" || key == "projects" || key == "sql_var" || typeof json[key] == "string" || typeof json[key] == "number" || typeof json[key] == "boolean") {
+            obj[key] = json[key];
+          } else if(Array.isArray(json[key])) {
             let arr = [];
             for(let i = 0; i < json[key].length; i++){
               let obj2 = recursion(json[key][i]);
               arr.push(obj2);
             }
             obj[key] = arr;
-          } else if(typeof json[key] == "string" || typeof json[key] == "number" || typeof json[key] == "boolean") {
-            obj[key] = json[key]
           } else if(typeof json[key] == "object"){
             obj[key] = recursion(json[key])
           }

@@ -26,16 +26,24 @@ export default {
   },
   async mounted() {
     if(this.$isElectron== true){
-      try{
-        let result = await this.retrive("/sdcard");
-        this.left = result;
-      } catch(e){
-        alert(e)
-      }
+      setTimeout(async () => {
+        window.vm.loading();
+        setTimeout(async () => {
+          try{
+            let result = await this.retrive("/sdcard");
+            this.left = result;
+          } catch(e){
+            alert(e)
+          } finally {
+            window.vm.loading(false);
+          }
+        }, 1000);
+      }, 300);
     }
   },
   methods: {
     retrive(path){
+      
       path = typeof path == "undefined" ? "" : path + "/";
       return new Promise( async (success, error) => {
         if(this.$isElectron== true){
@@ -64,6 +72,7 @@ export default {
         } else {
           success([])
         }
+        
       })
     },
     async loadData (item, callback) {

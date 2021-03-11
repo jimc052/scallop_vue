@@ -32,7 +32,7 @@
     </div>
     <ModalConfig :visible="visibleConfig" @on-close="onCloseConfig" 
       :config="visibleConfig == false ? undefined : config" />
-    <ModalDatabaseOption :visible="visibleDatabase" @on-close="onCloseDatabaseOption" />
+    <ModalDatabaseOption ref="modalOption" :visible="visibleDatabase" :config="visibleDatabase == false ? undefined : config" @on-close="onCloseDatabaseOption" />
   </div>
 </template>
 
@@ -84,24 +84,33 @@ export default {
           {title: "資料庫複製", icon: "md-redo", role: "database-replicate"},
         ],
         tables: {
-          SYS: ['SITES', 'USERS', 'USERGROUPS'],
-          BASE: ['APLSYS', 'TMMF', 'STKNAME', 'STOCK', 'SYSCOD', 'BAS_EMP', 'BAS_IO', 'BAS_IOGROUP', 'BAS_PTYPE', 
-            'BAS_PUBLIC', 'BAS_SER', 'CASHMF', 'CLEVEL', 'CODE', 'DPF_PLU2', 'DPF_PLU3', 'DPF_PLU4', 
-            'DPMF', 'F_PLU1', 'F_PLU12', 'F_PLU2', 'F_PLU23MF', 'F_PLU3', 'F_PLU4', 'F_TABMF', 'GPMF', 
-            'MGUIELEC', 'MGUIELEC_D', 'MGUIELEC_H', 'MGUIELEC_S', 'PADNAME', 'PAYMENT', 'PRN_TYPE', 'PSERVER', 
-            'PSERVER_LST', 'PSERVER_STORE',
-            'PRODUCT', 'PRODUCT_ORD', 'PRODUCT_RATE', 'FFDP', 'FFDPPLU', 'FFDP_HS', 'FFPLU', 'FFRTR', 
-            'PROMO_H', 'PROMO_I', 'SITES_JPC_PARAM', 'SITES_JPC_PARAM_D', 'SITES_PARAM', 
-            'SIZE', 'BAS_DESC2', 'BAS_DP'],
-          TRANSACTION: ['ADCAROUSEL', 'APPSITEMENU', 'BARCODE_FMT', 'BEACONPOS', 'BEACONTMPLIST', 'BGPMF', 
-            'BONUSLOG', 'BONUSMASTER', 'BULLETIN_BOARD', 'COLOR', 'FINDATA', 'HTRH', 'HTRI', 'IMPORT', 
-            'IITEM', 'IOAMT_H', 'IOAMT_I', 'MAKER', 'MAKER_C', 'MTAXH', 'MTAXI', 'PACK', 'POS_E', 
-            'POS_H', 'POS_HM', 'POS_I', 'PREPAIDRULE', 'QITEM', 'RECEPTION', 'RIITEM', 'RIMP', 
-            'SCHG_H', 'SCHG_I', 'TAKE_H', 'TAKE_I', 'TOITEM', 'TORDER', 'TRANS_2UBILL', 
-            'TRANS_EZPAYMENT', 'TRANS_IPASS', 'TRANS_IPASS_CR', 'TRANS_PMS', 'TRANS_UUPON', 
-            'VIPMF', 'VIPMF_LOG'
+          SYS: ["SITES", "USERS", "USERGROUPS"],
+          BASE: ["APLSYS", "TMMF", "STKNAME", "STOCK", "SYSCOD", "BAS_EMP", "BAS_IO", "BAS_IOGROUP", "BAS_PTYPE", 
+            "BAS_PUBLIC", "BAS_SER", "CASHMF", "CLEVEL", "CODE", "DPF_PLU2", "DPF_PLU3", "DPF_PLU4", 
+            "DPMF", "F_PLU1", "F_PLU12", "F_PLU2", "F_PLU23MF", "F_PLU3", "F_PLU4", "F_TABMF", "GPMF", 
+            "MGUIELEC", "MGUIELEC_D", "MGUIELEC_H", "MGUIELEC_S", "PADNAME", "PAYMENT", "PRN_TYPE", "PSERVER", 
+            "PSERVER_LST", "PSERVER_STORE",
+            "PRODUCT", "PRODUCT_ORD", "PRODUCT_RATE", "FFDP", "FFDPPLU", "FFDP_HS", "FFPLU", "FFRTR", 
+            "PROMO_H", "PROMO_I", "SITES_JPC_PARAM", "SITES_JPC_PARAM_D", "SITES_PARAM", 
+            "SIZE", "BAS_DESC2", "BAS_DP"],
+          TRANSACTION: [
+            {"tbl": "HTRH", "disable": true, "where": "STOCK_NO = '{STOCK_NO}' and TRN_DATE = '{T_DAY}'"},
+            {"tbl": "HTRI", "disable": true, "where": "STOCK_NO = '{STOCK_NO}' and TRN_DATE = '{T_DAY}'"},
+            {"tbl": "POS_H", "where": "T_STORE = '{STOCK_NO}' and T_DAY = '{T_DAY}'"},
+            {"tbl": "POS_I", "where": "T_STORE = '{STOCK_NO}' and T_DAY = '{T_DAY}'"},
+            {"tbl": "POS_HM", "where": "T_STORE = '{STOCK_NO}' and T_DAY = '{T_DAY}'"},
+          ],
+          OPTIONS: [
+            "ADCAROUSEL", "APPSITEMENU", "BARCODE_FMT", "BEACONPOS", "BEACONTMPLIST", "BGPMF", 
+            "BONUSLOG", "BONUSMASTER", "BULLETIN_BOARD", "COLOR", "FINDATA", "IMPORT", 
+            "IITEM", "IOAMT_H", "IOAMT_I", "MAKER", "MAKER_C", "MTAXH", "MTAXI", "PACK", "POS_E", 
+            "PREPAIDRULE", "QITEM", "RECEPTION", "RIITEM", "RIMP", 
+            "SCHG_H", "SCHG_I", "TAKE_H", "TAKE_I", "TOITEM", "TORDER", "TRANS_2UBILL", 
+            "TRANS_EZPAYMENT", "TRANS_IPASS", "TRANS_IPASS_CR", "TRANS_PMS", "TRANS_UUPON", 
+            "VIPMF", "VIPMF_LOG"
           ]
         },
+        sql_var: [ "STOCK_NO", "TM_NO", "T_DAY"],
         commands: [
           {title: "app 專案", icon: "logo-android", expand: true,
             children: [
@@ -176,7 +185,19 @@ export default {
       this.visibleConfig = false;
     },
     onCloseDatabaseOption(data){ // not yet
-
+      this.visibleDatabase = false;
+      if(typeof data == "object") {
+        processing = true;
+        let tables = {SYS: this.config.tables.SYS, BASE: this.config.tables.BASE};
+        if(data.mode == "刪除" || data.tables.indexOf('交易資料表') !=  -1) {
+          tables.TRANSACTION = this.config.tables.TRANSACTION;
+        }
+        if(data.mode == "刪除" || data.tables.indexOf('自訂資料表') !=  -1) {
+          tables.OPTIONS = this.config.tables.OPTIONS;
+        }
+        data.tables = tables;
+        this.broadcast.$emit("term-database", this.tabCurr, data);
+      }
     },
     onSelectChange(node) { // treeview click
       let self = this;
@@ -195,12 +216,12 @@ export default {
           } else
             execute(node.cmd)
         } else if(typeof node.role == "string") {
-          console.log(node)
+          // console.log(node)
           if(node.role == "clear")
             execute(node.role)
-          else if(node.role == "database-replicate")
+          else if(node.role == "database-replicate"){ // 資料庫複製
             self.visibleDatabase = true;
-          else if(node.role == "database")
+          } else if(node.role == "database")
             self.databasePicker(node)
           else
             alert("role: " + node.role)
@@ -276,7 +297,6 @@ export default {
     },
     databasePicker(database) {
       let dirty = false;
-
       this.$Modal.confirm({
         title: "資料庫設定［" + database.title + "］",
         width: 500,
