@@ -114,8 +114,9 @@ export default {
               }
             })
             d2.forEach(item => {
-              item.security = (item.host.indexOf("myjabezpos") > -1 
-                && (item.database.indexOf("jp_") == 0 || item.sys_database.indexOf("jp_") == 0) ) 
+              item.security = (item.host.trim().toLowerCase().indexOf("myjabezpos") > -1 
+                && (item.database.trim().toLowerCase().indexOf("jp_") == 0 
+                  || item.sys_database.trim().toLowerCase().indexOf("jp_") == 0) ) 
                 ? true : false;
             }); 
             this.database = d2;

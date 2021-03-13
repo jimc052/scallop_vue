@@ -164,8 +164,6 @@ export default {
                   json.sql_var.forEach(el => {
                     where = where.replace("{" + el.title + "}", el.value)
                   });
-                  console.log(where)
-
                 }
                 tbl = tbl.tbl;
               } else {
@@ -367,7 +365,7 @@ export default {
     },
     addHistory(){
       for(let i = 0; i < arguments.length; i++){
-        console.log(i + ": '" + arguments[i] + "'")
+        // console.log(i + ": '" + arguments[i] + "'")
         if(typeof arguments[i].error == "string") {
           this.history.replace(waiting, "");
           this.history += "<span class='term-error' >" + arguments[i].error + "</span>";

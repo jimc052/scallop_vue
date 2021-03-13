@@ -32,7 +32,7 @@
     </div>
     <ModalConfig :visible="visibleConfig" @on-close="onCloseConfig" 
       :config="visibleConfig == false ? undefined : config" />
-    <ModalDatabaseOption ref="modalOption" :visible="visibleDatabase" :config="visibleDatabase == false ? undefined : config" @on-close="onCloseDatabaseOption" />
+    <ModalDatabaseOption :visible="visibleOption" :config="visibleOption == false ? undefined : config" @on-close="onCloseDatabaseOption" />
   </div>
 </template>
 
@@ -60,7 +60,7 @@ export default {
     return {
       split1: 0.3,
       visibleConfig: false,
-      visibleDatabase: false, //this.$isElectron== true ? false : true,
+      visibleOption: false, //this.$isElectron== true ? false : true,
       tabs: [{title: "1", id: 1}],
       tabIndex: 1,
       tabCurr: "1",
@@ -72,6 +72,23 @@ export default {
           {project: "mECR", package: "com.bethel.v1", folder: "~/react-native/V1/android", apk: "/app/build/outputs/apk/mECR.apk"},
           {project: "KONE", package: "com.jabezpos.kone", folder: "~/react-native/kone/android", apk: "/app/build/outputs/apk/release/KONE.apk"},
           {project: "JabezDC", package: "com.jabezdc", folder: "~/react-native/jabezdc/android", apk: "/app/build/outputs/apk/release/JabezDC.apk"},
+        ],
+        commands: [
+          {title: "app 專案", icon: "logo-android", expand: true,
+            children: [
+              {title: "開啟資料夾", cmd: "open {project.folder}"},
+              {title: "安裝專案", cmd: "adb install -r {project.folder}{project.apk}"},
+              {title: "啓動專案", cmd: "adb shell am start {project.package}/{project.package}.MainActivity"},
+              {title: "停止專案", cmd: "adb shell am force-stop {project.package}"},
+              {title: "移除專案", cmd: "adb shell pm uninstall -k {project.package}"},            
+            ]
+          },
+          {title: "ADB", expand: true, children: [
+            {title: "reverse(8081)", cmd: "adb reverse tcp:8081 tcp:8081"},
+            {title: "擷取畫面", cmd: "adb shell screencap -p /sdcard/Download/screencap.png && adb pull /sdcard/Download/screencap.png ~/Downloads && open ~/Downloads && adb shell rm /sdcard/Download/screencap.png"},
+          ]},
+          
+          {title: "清除終端機", role: "clear"},
         ],
         database: [
           {title: "資料庫設定", expand: true,
@@ -110,24 +127,7 @@ export default {
             "VIPMF", "VIPMF_LOG"
           ]
         },
-        sql_var: [ "STOCK_NO", "TM_NO", "T_DAY"],
-        commands: [
-          {title: "app 專案", icon: "logo-android", expand: true,
-            children: [
-              {title: "開啟資料夾", cmd: "open {project.folder}"},
-              {title: "安裝專案", cmd: "adb install -r {project.folder}{project.apk}"},
-              {title: "啓動專案", cmd: "adb shell am start {project.package}/{project.package}.MainActivity"},
-              {title: "停止專案", cmd: "adb shell am force-stop {project.package}"},
-              {title: "移除專案", cmd: "adb shell pm uninstall -k {project.package}"},            
-            ]
-          },
-          {title: "ADB", expand: true, children: [
-            {title: "reverse(8081)", cmd: "adb reverse tcp:8081 tcp:8081"},
-            {title: "擷取畫面", cmd: "adb shell screencap -p /sdcard/Download/screencap.png && adb pull /sdcard/Download/screencap.png ~/Downloads && open ~/Downloads && adb shell rm /sdcard/Download/screencap.png"},
-          ]},
-          
-          {title: "清除終端機", role: "clear"},
-        ]
+        sql_var: [ "STOCK_NO", "TM_NO", "T_DAY"]
       },
     }
   },
@@ -185,7 +185,7 @@ export default {
       this.visibleConfig = false;
     },
     onCloseDatabaseOption(data){ // not yet
-      this.visibleDatabase = false;
+      this.visibleOption = false;
       if(typeof data == "object") {
         processing = true;
         let tables = {SYS: this.config.tables.SYS, BASE: this.config.tables.BASE};
@@ -220,7 +220,7 @@ export default {
           if(node.role == "clear")
             execute(node.role)
           else if(node.role == "database-replicate"){ // 資料庫複製
-            self.visibleDatabase = true;
+            self.visibleOption = true;
           } else if(node.role == "database")
             self.databasePicker(node)
           else

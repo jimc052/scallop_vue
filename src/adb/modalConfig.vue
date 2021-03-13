@@ -3,7 +3,7 @@
     @on-visible-change="onVisibleChange" :closable="false"
     fullscreen
   >
-    <codemirror :options="cmOptions" ref="editor" style="height: 100%;"
+    <codemirror :options="cmOptions" ref="editor" :style="{height: height + 'px'}"
       @ready="onCmReady"
       @focus="onCmFocus"
       @input="onCmCodeChange"
@@ -61,6 +61,7 @@ export default {
           "CodeMirror-lint-markers",
         ],
       },
+      height: 0
     }
   },
   async mounted() {
@@ -93,9 +94,23 @@ export default {
       } else {
       }
     },
+    onResize(){
+      let h = document.querySelector("#modalConfig .ivu-modal-body").clientHeight;
+      this.height = h;
+      document.querySelector(".CodeMirror").style.height = h + "px"
+      console.log("CodeMirror.clientHeight: " + document.querySelector(".CodeMirror").clientHeight)
+    }
   },
   watch: {
     visible(value){
+      if(value == true) {
+        setTimeout(() => {
+          this.onResize();  
+        }, 600);
+      } else {
+        this.height = 0;
+      }
+        
     },
     config(value) {
       if(typeof value == "undefined") {
