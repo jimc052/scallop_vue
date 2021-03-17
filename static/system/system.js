@@ -33,3 +33,14 @@ Date.prototype.toString = function (format) {
   r = r.replace("ms", ms);
   return r;
 };
+
+Object.defineProperty(Array.prototype, 'clone', {
+	value: function() {
+		let arr1 = this, arr2 = [];
+		for (let i = 0; i < arr1.length; i++) {
+			arr2.push(Object.assign({}, arr1[i]));
+		}
+		return arr2;
+	},
+	enumerable: false
+});

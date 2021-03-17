@@ -8,7 +8,7 @@
         </span>
       </div>
       <Icon type="md-cog" class="btn" @click.native="visibleConfig=true"></Icon>
-      <Icon type="md-close" class="btn" @click.native="onClickIcon"></Icon>
+      <!-- <Icon type="md-close" class="btn" @click.native="onClickIcon"></Icon> -->
       <!-- https://www.iviewui.com/components/icon -->
     </div>
     <div  style="flex: 1;">
@@ -19,7 +19,7 @@
           <!--  -->
         </div>
         <div slot="right" id="right" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
-          <Tabs type="card"  @on-tab-remove="onTabRemove" @on-click="onTabClick">
+          <Tabs type="card" id="adbTabs"  @on-tab-remove="onTabRemove" @on-click="onTabClick">
             <TabPane v-for="(tab, index) in tabs" :closable="index == 0 ? false : true" 
               :name="tab.title" :key="tab.id" :label="'Shell ' + tab.title">
               <Terminal :ref="'term-' + tab.title"  :height="height"
@@ -168,10 +168,10 @@ export default {
       localStorage["adb-split-left-width"] = w;
     },
     onResize(){
-      let h1 = document.querySelector(".ivu-tabs").clientHeight;
-      let h2 = document.querySelector(".ivu-tabs-bar").clientHeight;
+      let h1 = document.querySelector("#adbTabs").clientHeight;
+      let h2 = document.querySelector("#adbTabs .ivu-tabs-bar").clientHeight;
       this.height = (h1 - h2);
-      document.querySelector(".ivu-tabs-content").style.height = this.height + "px";
+      document.querySelector("#adbTabs .ivu-tabs-content").style.height = this.height + "px";
     },
     onClickIcon(){
       alert("還沒寫，只作測試用，" + this.tabCurr)

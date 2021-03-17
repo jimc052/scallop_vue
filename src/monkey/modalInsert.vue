@@ -8,7 +8,7 @@
         @on-change="scriptChange" />
       </TabPane>
       <TabPane label="清單" class="tab-pane">
-          <Table border :columns="columns" :data="list" @on-row-click="onRowClick"></Table>
+        <Table border :columns="columns" :data="list" @on-row-click="onRowClick"></Table>
       </TabPane>
     </Tabs>
   </div>
