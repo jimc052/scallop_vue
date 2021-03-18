@@ -4,24 +4,37 @@
     fullscreen
   >
     <Tabs type="card" id="configTabs" style="margin-top: 5px;" @on-click="onTabClick">
-      <TabPane :closable="false" label="SYS">
-        <TableConfig :columns="colTables" :datas="dataTables.SYS" v-if="visible == true" :height="height" />
+      <TabPane :closable="false" label="SYS" name="SYS">
+        <TableConfig :columns="colTables" :datas="dataTables.SYS" name="SYS"
+          v-if="visible == true" :height="height" @on-update="onUpdate"  />
       </TabPane>
-      <TabPane :closable="false" label="BASE">
-        <TableConfig :columns="colTables" :datas="dataTables.BASE" v-if="visible == true" :height="height" />
+      <TabPane :closable="false" label="BASE" name="BASE">
+        <TableConfig :columns="colTables" :datas="dataTables.BASE" name="BASE"
+          v-if="visible == true" :height="height" @on-update="onUpdate" />
       </TabPane>
-      <TabPane :closable="false" label="TRANSACTION">
-        <TableConfig :columns="colTables" :datas="dataTables.TRANSACTION" v-if="visible == true" :height="height"/>
+      <TabPane :closable="false" label="TRANSACTION" name="TRANSACTION">
+        <TableConfig :columns="colTables" :datas="dataTables.TRANSACTION" name="TRANSACTION"
+          v-if="visible == true" :height="height" @on-update="onUpdate" />
       </TabPane>
-      <TabPane :closable="false" label="OPTIONS">
-        <TableConfig :columns="colTables" :datas="dataTables.OPTIONS" v-if="visible == true" :height="height" />
+      <TabPane :closable="false" label="OPTIONS" name="OPTIONS">
+        <TableConfig :columns="colTables" :datas="dataTables.OPTIONS" name="OPTIONS"
+          v-if="visible == true" :height="height" @on-update="onUpdate" />
       </TabPane>
-      <TabPane :closable="false" label="database">
-        <TableConfig :columns="colDatabase" :datas="dataDatabase" v-if="visible == true" :height="height" />
+      <TabPane :closable="false" label="sql_var" name="sql_var">
+        <TableConfig :columns="colSQL_var" :datas="dataSQL_var" name="sql_var"
+          v-if="visible == true" :height="height" @on-update="onUpdate" />
       </TabPane>
-      <TabPane :closable="false" label="projects">
-        <TableConfig :columns="colProject" :datas="dataProject" v-if="visible == true" :height="height" />
+
+      <TabPane :closable="false" label="database" name="database">
+        <TableConfig :columns="colDatabase" :datas="dataDatabase" name="database"
+          v-if="visible == true" :height="height" @on-update="onUpdate" />
       </TabPane>
+      
+      <TabPane :closable="false" label="projects" name="projects">
+        <TableConfig :columns="colProject" :datas="dataProject" name="projects"
+          v-if="visible == true" :height="height" @on-update="onUpdate" />
+      </TabPane>
+
       <TabPane :closable="false" label="原始碼" name="原始碼" id="tabPaneCode">
         <codemirror :options="cmOptions" ref="editor" 
           @ready="onCmReady"
@@ -89,52 +102,70 @@ export default {
       },
       height: 0,
       mode: "原始碼",
+      panel: {
+        project: {
+          cols: 
+        }
+      }
       colProject: [{
           title: 'project',
           key: 'project',
+          slot: 'project',
           width: 100,
         }, {
           title: 'package',
           key: 'package',
+          slot: 'package',
           width: 180,
         }, {
           title: 'folder',
           key: 'folder',
+          slot: 'folder',
         }, {
           title: 'apk',
           key: 'apk',
+          slot: 'apk'
       }],
       dataProject: [],
       colDatabase: [{
           title: 'title',
           key: 'title',
+          slot: 'title',
           width: 100,
         }, {
           title: 'host',
           key: 'host',
+          slot: 'host',
           width: 180,
         }, {
           title: 'port',
           key: 'port',
+          slot: 'port',
+          type: "number"
         }, {
           title: 'user',
           key: 'user',
+          slot: 'user',
         }, {
           title: 'password',
           key: 'password',
+          slot: 'password',
         }, {
           title: 'database',
           key: 'database',
+          slot: 'database',
         }, {
           title: 'sys_database',
           key: 'sys_database',
+          slot: 'sys_database',
       }],
       dataDatabase: [],
       colTables: [{
           title: '失能',
           key: 'disable',
-          width: 80,
+          width: 60,
           slot: 'disable',
+          type: "checkbox"
         }, {
           title: '名稱',
           key: 'tbl',
@@ -151,18 +182,25 @@ export default {
         TRANSACTION: [],
         OPTIONS: [],       
       },
-      tabCurr: ""
+      dataSQL_var: [],
+      colSQL_var: [{
+        title: '參數',
+        key: 'value',
+        slot: 'value',
+      }],
+      tabCurr: "SYS"
     }
   },
   async mounted() {
-    
   },
   methods: {
     onTabClick(name){
       this.tabCurr = name;
       console.log(name)
     },
-    onTabsAdd(){},
+    onTabsAdd(){
+      this.broadcast.$emit("config-add", this.tabCurr);
+    },
     onCmReady(cm) {
       cm.focus();
       this.editor = cm;
@@ -223,15 +261,40 @@ export default {
         return obj;
       }
     },
-    onRowProjectClick(index){
+    onUpdate(datas){
+      console.log("onUpdate: " + this.tabCurr)
+      this.dirty = true;
+      let json = JSON.parse(this.editor.getValue());
+      if("SYS,BASE,TRANSACTION,OPTIONS".indexOf(this.tabCurr) > -1){
+        let arr = [];
+        datas.forEach(row=>{
+          let score = "";
+          this.colTables.forEach((item, index) =>{
+            if(item.key == "disable" && row[item.key] == true) {
+              score += index;
+            } else if(typeof row[item.key] == "string" && row[item.key].length > 0) {
+              score += index;
+            }
+          });
 
-    }, 
-    onEdit(){
-
-    },
-    onRemove() {
-
-    }, 
+          if(score == "1")
+            arr.push(row["tbl"])
+          else if(score.indexOf("1") > -1 && score.length > 1) 
+            arr.push(row)
+        })
+        console.log(arr)
+        json.tables[this.tabCurr] = arr;
+        // console.log(json.tables[this.tabCurr])
+      } else {
+        let arr = [];
+        datas.forEach(row=>{
+          let isOk = false;
+         
+        });
+      }
+      this.readConfig(json)
+      // console.log(data)
+    }
   },
   watch: {
     visible(value){
@@ -247,8 +310,30 @@ export default {
       if(typeof value == "undefined") {
         this.editor.setValue("");
       } else {
-        this.dataProject = value.projects.clone();
-        this.dataDatabase = value.database[0].children.clone();
+        if(Array.isArray(value.projects)) {
+          value.projects.forEach(item=>{
+            let obj = {};
+            this.colProject.forEach(row=>{
+              if(typeof item[row.key] != "undefined")
+                obj[row.key] = item[row.key]
+            });
+            this.dataProject.push(obj)
+          });
+        } else 
+          this.dataProject = [];
+
+        if(Array.isArray(value.database)) {
+          value.database[0].children.forEach(item=>{
+            let obj = {};
+            this.colDatabase.forEach(row=>{
+              if(typeof item[row.key] != "undefined")
+                obj[row.key] = item[row.key]
+            });
+            this.dataDatabase.push(obj)
+          });
+        } else 
+          this.dataDatabase = [];
+
         for(let key in this.dataTables){
           this.dataTables[key] = [];
         }
@@ -274,31 +359,15 @@ export default {
             });
           }
         }
-        
-        this.readConfig(value)
-        // let json = recursion(this.config);
-        // this.editor.setValue(JSON.stringify(json, null, "\t"))
-      }
 
-      function recursion(json){
-        let obj = {};
-        for(let key in json) {
-          if("nodeKey,expand,selected".indexOf(key) > -1)
-            continue;
-          else if(key == "tables" || key == "projects" || key == "sql_var" || typeof json[key] == "string" || typeof json[key] == "number" || typeof json[key] == "boolean") {
-            obj[key] = json[key];
-          } else if(Array.isArray(json[key])) {
-            let arr = [];
-            for(let i = 0; i < json[key].length; i++){
-              let obj2 = recursion(json[key][i]);
-              arr.push(obj2);
-            }
-            obj[key] = arr;
-          } else if(typeof json[key] == "object"){
-            obj[key] = recursion(json[key])
-          }
+        this.dataSQL_var = [];
+        if(typeof value.sql_var == "object"){
+          value.sql_var.forEach(item=>{
+            this.dataSQL_var.push({value: item})
+          })
         }
-        return obj;
+
+        this.readConfig(value)
       }
     }
   }, 
@@ -328,5 +397,8 @@ export default {
 
 #modalConfig  .ivu-table-cell {
   padding: 0px 5px;
+  overflow:hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>
