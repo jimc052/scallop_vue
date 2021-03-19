@@ -31,7 +31,8 @@
       </Split>
     </div>
     <ModalConfig :visible="visibleConfig" @on-close="onCloseConfig" 
-      :config="visibleConfig == false ? undefined : config" />
+      :config="visibleConfig == false ? undefined : config"
+    />
     <ModalDatabaseOption :visible="visibleOption" :config="visibleOption == false ? undefined : config" @on-close="onCloseDatabaseOption" />
   </div>
 </template>

@@ -151,8 +151,11 @@ export default {
         for(let key in json.tables) {
           let tables = json.tables[key];
           for(let i = 0; i < tables.length; i++) {
-            let tbl = tables[i], where = "";
+            let tbl = tables[i], where = "", cols = "*";
             if(typeof tbl == "object") {
+              if(typeof tbl.cols == "string") {
+                cols = tbl.cols;
+              }
               if(typeof tbl.tbl == "string") {
                 if(typeof tbl.where == "string" && tbl.where.trim().length > 0) {
                   let x = tbl.where.toUpperCase();
@@ -175,7 +178,7 @@ export default {
 
             try {
               this.addPrompt({id: "source_" + tbl, msg: "讀取 " + tbl + " ......"});
-              let sql = "Select * from " + (key == "SYS" ? json.source_config.sys_database + "." : "") + tbl + 
+              let sql = "Select " + cols + " from " + (key == "SYS" ? json.source_config.sys_database + "." : "") + tbl + 
                 " Where " +
                 ( tbl == "USERGROUPS" 
                   ? "USERID Like Concat('%@','" + json.site + "')"

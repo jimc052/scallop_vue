@@ -4,37 +4,18 @@
     fullscreen
   >
     <Tabs type="card" id="configTabs" style="margin-top: 5px;" @on-click="onTabClick">
-      <TabPane :closable="false" label="SYS" name="SYS">
-        <TableConfig :columns="colTables" :datas="dataTables.SYS" name="SYS"
-          v-if="visible == true" :height="height" @on-update="onUpdate"  />
-      </TabPane>
-      <TabPane :closable="false" label="BASE" name="BASE">
-        <TableConfig :columns="colTables" :datas="dataTables.BASE" name="BASE"
-          v-if="visible == true" :height="height" @on-update="onUpdate" />
-      </TabPane>
-      <TabPane :closable="false" label="TRANSACTION" name="TRANSACTION">
-        <TableConfig :columns="colTables" :datas="dataTables.TRANSACTION" name="TRANSACTION"
-          v-if="visible == true" :height="height" @on-update="onUpdate" />
-      </TabPane>
-      <TabPane :closable="false" label="OPTIONS" name="OPTIONS">
-        <TableConfig :columns="colTables" :datas="dataTables.OPTIONS" name="OPTIONS"
-          v-if="visible == true" :height="height" @on-update="onUpdate" />
-      </TabPane>
-      <TabPane :closable="false" label="sql_var" name="sql_var">
-        <TableConfig :columns="colSQL_var" :datas="dataSQL_var" name="sql_var"
-          v-if="visible == true" :height="height" @on-update="onUpdate" />
+      <TabPane :closable="false" v-for="(item,key) in configTables" :key="key"
+        :label="key" :name="key">
+        <TableConfig :columns="colTables" :datas="item" :name="key" :height="height" :active="tabCurr == key"
+          v-if="visible == true" @on-update="onUpdate"  />
       </TabPane>
 
-      <TabPane :closable="false" label="database" name="database">
-        <TableConfig :columns="colDatabase" :datas="dataDatabase" name="database"
-          v-if="visible == true" :height="height" @on-update="onUpdate" />
+      <TabPane :closable="false" v-for="(item,key) in panel" :key="key"
+        :label="key" :name="key">
+        <TableConfig :columns="item.cols" :datas="item.datas" :name="key" :height="height" :active="tabCurr == key"
+          v-if="visible == true" @on-update="onUpdate"  />
       </TabPane>
       
-      <TabPane :closable="false" label="projects" name="projects">
-        <TableConfig :columns="colProject" :datas="dataProject" name="projects"
-          v-if="visible == true" :height="height" @on-update="onUpdate" />
-      </TabPane>
-
       <TabPane :closable="false" label="原始碼" name="原始碼" id="tabPaneCode">
         <codemirror :options="cmOptions" ref="editor" 
           @ready="onCmReady"
@@ -103,62 +84,72 @@ export default {
       height: 0,
       mode: "原始碼",
       panel: {
-        project: {
-          cols: 
-        }
-      }
-      colProject: [{
-          title: 'project',
-          key: 'project',
-          slot: 'project',
-          width: 100,
-        }, {
-          title: 'package',
-          key: 'package',
-          slot: 'package',
-          width: 180,
-        }, {
-          title: 'folder',
-          key: 'folder',
-          slot: 'folder',
-        }, {
-          title: 'apk',
-          key: 'apk',
-          slot: 'apk'
-      }],
-      dataProject: [],
-      colDatabase: [{
-          title: 'title',
-          key: 'title',
-          slot: 'title',
-          width: 100,
-        }, {
-          title: 'host',
-          key: 'host',
-          slot: 'host',
-          width: 180,
-        }, {
-          title: 'port',
-          key: 'port',
-          slot: 'port',
-          type: "number"
-        }, {
-          title: 'user',
-          key: 'user',
-          slot: 'user',
-        }, {
-          title: 'password',
-          key: 'password',
-          slot: 'password',
-        }, {
-          title: 'database',
-          key: 'database',
-          slot: 'database',
-        }, {
-          title: 'sys_database',
-          key: 'sys_database',
-          slot: 'sys_database',
-      }],
+        sql_var: {
+          cols: [{
+            title: '參數',
+            key: 'value',
+            slot: 'value',
+          }],
+          datas: []
+        },
+        projects: {
+          cols: [{
+              title: 'project',
+              key: 'project',
+              slot: 'project',
+              width: 100,
+            }, {
+              title: 'package',
+              key: 'package',
+              slot: 'package',
+              width: 180,
+            }, {
+              title: 'folder',
+              key: 'folder',
+              slot: 'folder',
+            }, {
+              title: 'apk',
+              key: 'apk',
+              slot: 'apk'
+          }],
+          datas: []
+        },
+        database: {
+          cols: [{
+              title: 'title',
+              key: 'title',
+              slot: 'title',
+              width: 100,
+            }, {
+              title: 'host',
+              key: 'host',
+              slot: 'host',
+              width: 180,
+            }, {
+              title: 'port',
+              key: 'port',
+              slot: 'port',
+              type: "number"
+            }, {
+              title: 'user',
+              key: 'user',
+              slot: 'user',
+            }, {
+              title: 'password',
+              key: 'password',
+              slot: 'password',
+            }, {
+              title: 'database',
+              key: 'database',
+              slot: 'database',
+            }, {
+              title: 'sys_database',
+              key: 'sys_database',
+              slot: 'sys_database',
+          }],
+          datas: []
+        },
+      },
       dataDatabase: [],
       colTables: [{
           title: '失能',
@@ -167,27 +158,26 @@ export default {
           slot: 'disable',
           type: "checkbox"
         }, {
-          title: '名稱',
+          title: '表格名稱',
           key: 'tbl',
           width: 200,
           slot: 'tbl',
+        }, {
+          title: '欄位',
+          key: 'cols',
+          // width: 200,
+          slot: 'cols',
         }, {
           title: 'where',
           key: 'where',
           slot: 'where',
       }],
-      dataTables: {
+      configTables: {
         SYS: [], 
         BASE: [], 
         TRANSACTION: [],
         OPTIONS: [],       
       },
-      dataSQL_var: [],
-      colSQL_var: [{
-        title: '參數',
-        key: 'value',
-        slot: 'value',
-      }],
       tabCurr: "SYS"
     }
   },
@@ -284,13 +274,39 @@ export default {
         })
         console.log(arr)
         json.tables[this.tabCurr] = arr;
-        // console.log(json.tables[this.tabCurr])
       } else {
+        let cols = this.panel[this.tabCurr].cols;
         let arr = [];
         datas.forEach(row=>{
-          let isOk = false;
-         
+          if(cols.length == 1) {
+            if(typeof row.value == "string" && row.value.length > 0)
+              arr.push(row.value)
+          } else {
+            let isRequire = true, isValue = false;
+            cols.forEach(col=>{
+
+              if(col.isRequire == true) {
+                if(typeof row[col.key] == "undefined")
+                  isRequire = false;
+                else if(typeof row[col.key] == "string" && row[col.key].length == 0)
+                  isRequire = false;
+              }
+              if(isValue == false) {
+                if(typeof row[col.key] == "string" && row[col.key].length > 0)
+                  isValue = true;
+                else if(typeof row[col.key] == "number")
+                  isValue = true;
+              }
+            });
+
+            if(isRequire == true && isValue == true)
+              arr.push(row)
+          }
         });
+        if(this.tabCurr == "database")
+          json[this.tabCurr][0].children = arr;
+        else
+          json[this.tabCurr] = arr;
       }
       this.readConfig(json)
       // console.log(data)
@@ -310,38 +326,14 @@ export default {
       if(typeof value == "undefined") {
         this.editor.setValue("");
       } else {
-        if(Array.isArray(value.projects)) {
-          value.projects.forEach(item=>{
-            let obj = {};
-            this.colProject.forEach(row=>{
-              if(typeof item[row.key] != "undefined")
-                obj[row.key] = item[row.key]
-            });
-            this.dataProject.push(obj)
-          });
-        } else 
-          this.dataProject = [];
-
-        if(Array.isArray(value.database)) {
-          value.database[0].children.forEach(item=>{
-            let obj = {};
-            this.colDatabase.forEach(row=>{
-              if(typeof item[row.key] != "undefined")
-                obj[row.key] = item[row.key]
-            });
-            this.dataDatabase.push(obj)
-          });
-        } else 
-          this.dataDatabase = [];
-
-        for(let key in this.dataTables){
-          this.dataTables[key] = [];
+        for(let key in this.configTables){
+          this.configTables[key] = [];
         }
         if(typeof value.tables == "object") {
           for(let key in value.tables){
-            // this.dataTables[key] = [];
+            // this.configTables[key] = [];
             let table1 = value.tables[key];
-            let table2 = this.dataTables[key]
+            let table2 = this.configTables[key]
             table1.forEach(item=>{
               if(typeof item == "string")
                 table2.push({tbl: item})
@@ -359,14 +351,24 @@ export default {
             });
           }
         }
-
-        this.dataSQL_var = [];
-        if(typeof value.sql_var == "object"){
-          value.sql_var.forEach(item=>{
-            this.dataSQL_var.push({value: item})
-          })
+         
+        for(let key in this.panel){
+          let target = this.panel[key];
+          target.datas = [];
+          let source = key == "database" ? value[key][0].children :  value[key];
+          source.forEach(item=>{
+            let obj = {};
+            if(target.cols.length == 1) {
+              target.datas.push({value: item})
+            } else {
+              target.cols.forEach(col =>{
+                if(typeof item[col.key] != "undefined")
+                  obj[col.key] = item[col.key]
+              });
+              target.datas.push(obj);            
+            }
+          });
         }
-
         this.readConfig(value)
       }
     }
@@ -400,5 +402,11 @@ export default {
   overflow:hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+#modalConfig  .ivu-table-cell button span {
+  font-size: 12px;
+}
+#configTabs .ivu-tabs-content {
+  padding-top: 2px;
 }
 </style>
