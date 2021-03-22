@@ -153,7 +153,7 @@ export default {
           for(let i = 0; i < tables.length; i++) {
             let tbl = tables[i], where = "", cols = "*";
             if(typeof tbl == "object") {
-              if(typeof tbl.cols == "string") {
+              if(typeof tbl.cols == "string" && tbl.cols.length > 0) {
                 cols = tbl.cols;
               }
               if(typeof tbl.tbl == "string") {
@@ -184,13 +184,39 @@ export default {
                   ? "USERID Like Concat('%@','" + json.site + "')"
                   : "SITE = '"  + json.site + "'"
                 ) + where; // limit 100
-              console.log(sql)
-              let x = await query(source, sql);
-              if(x.rows.length > 0) {
-                if(typeof datas[key] == "undefined") datas[key] = {};
-                datas[key][tbl] = x.rows;
+              // console.log(sql)
+              let tableSource = await query(source, sql);
+              // if(tableSource.rows.length > 0) {
+              //   if(typeof datas[key] == "undefined") datas[key] = {};
+              //   datas[key][tbl] = tableSource.rows;
+              // }
+              this.addPrompt({id: "source_" + tbl, msg: "讀取 " + tbl + "；" + (tableSource.rows.length) + " 列"});
+              //----------------------------------
+              // self.addPrompt(json.target + "資料表寫入：" + json.site);
+              for(let j = 0; j < tableSource.rows.length; j++) {
+                // if(j > 0) {
+                  this.addPrompt({id: "target_" + tbl, msg: "寫入 " + tbl + ": " + (j + 1) + " / " + tableSource.rows.length });
+                // }
+                let sql = "";
+                sql = "Insert Into " + (key == "SYS" ? json.target_config.sys_database + "." : "") + tbl + 
+                  " Set ";
+                let row = tableSource.rows[j];
+                let set = ""
+                for(let key2 in row) {
+                  if(row[key2] != null){
+                    let val = typeof row[key2] == "string" 
+                      ? row[key2].replace(new RegExp("'", "gm"),"''")
+                      : row[key2];
+                    set += (set.length > 0 ? ", " : "") + key2 + "='" + val + "'";
+                  }
+                }
+                sql += set;
+                // console.log(sql)
+                await query(target, sql)
               }
-              this.addPrompt({id: "source_" + tbl, msg: "讀取 " + tbl + "；" + (x.rows.length) + " 列"});
+              if(tableSource.rows.length > 0)
+                this.addPrompt({id: "target_" + tbl, msg: "寫入 " + tbl + ": " + tableSource.rows.length + " 列"});
+              //----------------------------------
             } catch(e) {
               this.addPrompt({error: e.toString()});
               finish();
@@ -200,7 +226,7 @@ export default {
           // console.log(datas); // break;
         }
         source.end();
-
+        /*
         self.addPrompt(json.target + "資料表寫入：" + json.site);
         for(let key in datas) {
           let tables = datas[key];
@@ -240,6 +266,7 @@ export default {
             // console.log(tbl)
           }
         }
+        */
         target.end();
       } else { // 
         self.addPrompt(json.target + "資料表刪除：" + json.site);
@@ -302,7 +329,7 @@ export default {
           if(self.$isElectron== true) {
             connect.query(sql, function(err, rows, fields) {
               if(err){
-                error(err);
+                error(err + "<br/><br/>" + sql);
               } else {
                 setTimeout(() => {
                   success({rows, fields});
