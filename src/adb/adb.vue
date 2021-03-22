@@ -14,9 +14,12 @@
     <div  style="flex: 1;">
       <Split v-model="split1"  @on-move-end="onMoveEnd">
         <div slot="left" id="left" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
-          <Tree :data="config.commands.concat(config.database)" style="z-index: -1" @on-select-change="onSelectChange" 
+          <div style="flex: 1;">
+          <Tree :data="config.commands.concat(config.database)" style="z-index: -1; " @on-select-change="onSelectChange" 
             :render="renderTreeItem" />
+          </div>
           <!--  -->
+          <div id="version">2021-03-19 10:40</div>
         </div>
         <div slot="right" id="right" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
           <Tabs type="card" id="adbTabs"  @on-tab-remove="onTabRemove" @on-click="onTabClick">
@@ -408,6 +411,17 @@ div, span {
 }
 #left, #right {
   height: 100%;
+}
+#left {
+  display: flex;
+  flex-direction: column;
+}
+#version {
+  color: red;
+  z-index: -1;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .demo-split{
   height: 200px;

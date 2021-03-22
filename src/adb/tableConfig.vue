@@ -81,6 +81,8 @@ export default {
         this.onEdit(this.editRow, this.editIndex)
       } else if(this.$isElectron== true && pk == true && char == "N" && this.editIndex == -1) {
         this.onAdd(this.name)
+      } else {
+        return;
       }
       event.preventDefault();
       event.stopImmediatePropagation();

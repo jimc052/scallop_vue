@@ -399,7 +399,7 @@ export default {
 
 #modalConfig  .ivu-table-cell {
   padding: 0px 5px;
-  overflow:hidden;
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
