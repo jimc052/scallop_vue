@@ -10,9 +10,14 @@
           v-if="visible == true" @on-update="onUpdate"  />
       </TabPane>
 
-      <TabPane :closable="false" v-for="(item,key) in panel" :key="key"
+      <TabPane :closable="false" v-for="(item,key) in panel1" :key="key"
         :label="key" :name="key">
         <TableConfig :columns="item.cols" :datas="item.datas" :name="key" :height="height" :active="tabCurr == key"
+          v-if="visible == true" @on-update="onUpdate"  />
+      </TabPane>
+
+      <TabPane :closable="false" label="commands" name="commands">
+        <TableConfig :columns="panel2.cols" :datas="panel2.datas" :height="height" :active="tabCurr == 'commands' "
           v-if="visible == true" @on-update="onUpdate"  />
       </TabPane>
       
@@ -83,7 +88,7 @@ export default {
       },
       height: 0,
       mode: "原始碼",
-      panel: {
+      panel1: {
         sql_var: {
           cols: [{
             title: '參數',
@@ -150,6 +155,24 @@ export default {
           datas: []
         },
       },
+      panel2: {
+        cols: [{
+          title: '群組',
+          key: 'group',
+          slot: 'group',
+          width: 100,
+        }, {
+          title: 'title',
+          key: 'title',
+          slot: 'title',
+          width: 150,
+        }, {
+          title: '指令',
+          key: 'cmd',
+          slot: 'cmd',
+        }],
+        datas: []
+      },
       dataDatabase: [],
       colTables: [{
           title: '失能',
@@ -182,6 +205,7 @@ export default {
     }
   },
   async mounted() {
+    // console.log(this.config)
   },
   methods: {
     onTabClick(name){
@@ -252,7 +276,7 @@ export default {
       }
     },
     onUpdate(datas){
-      console.log("onUpdate: " + this.tabCurr)
+      // console.log("onUpdate: " + this.tabCurr)
       this.dirty = true;
       let json = JSON.parse(this.editor.getValue());
       if("SYS,BASE,TRANSACTION,OPTIONS".indexOf(this.tabCurr) > -1){
@@ -274,8 +298,35 @@ export default {
         })
         console.log(arr)
         json.tables[this.tabCurr] = arr;
+      } else if(this.tabCurr == "commands"){
+        if(typeof json.commands == "object") {
+          console.log(this.panel2.datas)
+          let commands = [];
+          this.panel2.datas.forEach(item1=>{
+            let index = commands.findIndex(item2=>{
+              return item1.group == item2.title;
+            })
+            if(index == -1) {
+              commands.push({
+                title: item1.group,
+                icon: item1.icon,
+                children: []
+              })
+              index = commands.length - 1;
+            }
+            commands[index].children.push({title: item1.title, cmd: item1.cmd});
+          });
+          
+          
+          let clear = json.commands.filter(item=>{
+            return item.role == "clear";
+          });
+          if(clear.length == 1)
+            commands.push(clear[0]);
+          json.commands = commands;
+        }
       } else {
-        let cols = this.panel[this.tabCurr].cols;
+        let cols = this.panel1[this.tabCurr].cols;
         let arr = [];
         datas.forEach(row=>{
           if(cols.length == 1) {
@@ -284,7 +335,6 @@ export default {
           } else {
             let isRequire = true, isValue = false;
             cols.forEach(col=>{
-
               if(col.isRequire == true) {
                 if(typeof row[col.key] == "undefined")
                   isRequire = false;
@@ -352,8 +402,8 @@ export default {
           }
         }
          
-        for(let key in this.panel){
-          let target = this.panel[key];
+        for(let key in this.panel1){
+          let target = this.panel1[key];
           target.datas = [];
           let source = key == "database" ? value[key][0].children :  value[key];
           source.forEach(item=>{
@@ -366,6 +416,20 @@ export default {
                   obj[col.key] = item[col.key]
               });
               target.datas.push(obj);            
+            }
+          });
+        }
+        this.panel2.datas = [];
+        if(Array.isArray(value.commands)) {
+          value.commands.forEach((item, index)=>{
+            if(Array.isArray(item.children)) {
+              item.children.forEach((item2, index2)=>{
+                this.panel2.datas.push({
+                  group: item.title, icon: item.icon, 
+                  title: item2.title, cmd: item2.cmd,
+                  // index, index2
+                })
+              });
             }
           });
         }

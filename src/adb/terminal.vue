@@ -205,7 +205,7 @@ export default {
                 for(let key2 in row) {
                   if(row[key2] != null){
                     let val = typeof row[key2] == "string" 
-                      ? row[key2].replace(new RegExp("'", "gm"),"''")
+                      ? row[key2].replace(new RegExp("'", "gm"),"''").replace("\\", "\\\\")
                       : row[key2];
                     set += (set.length > 0 ? ", " : "") + key2 + "='" + val + "'";
                   }

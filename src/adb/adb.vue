@@ -19,7 +19,7 @@
             :render="renderTreeItem" />
           </div>
           <!--  -->
-          <div id="version">2021-03-19 10:40</div>
+          <div id="version">2021-05-05 16:00</div>
         </div>
         <div slot="right" id="right" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
           <Tabs type="card" id="adbTabs"  @on-tab-remove="onTabRemove" @on-click="onTabClick">

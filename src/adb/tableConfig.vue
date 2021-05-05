@@ -73,7 +73,7 @@ export default {
 			let ak = navigator.userAgent.indexOf('Macintosh') > -1  ? event.ctrlKey : event.altKey;
 			let sk = event.shiftKey, code = event.keyCode;
 			let char = (event.keyCode >=48 && event.keyCode <=122) ? String.fromCharCode(event.keyCode).toUpperCase() : "";
-      console.log("char: " + char + ", pk: " + pk + ", code: " + code)
+      // console.log("char: " + char + ", pk: " + pk + ", code: " + code)
       if(code == 27 && this.editIndex > -1) {
         this.editIndex = -1; 
         this.dirty = false;
