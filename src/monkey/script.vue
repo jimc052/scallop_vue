@@ -11,11 +11,11 @@
               :class="{ active: index === cursor }"
               style="cursor: pointer"
             >
-              <div @click="onClickSerial(index)" style="width: 30px">
+              <div @click="onClickSerial(index)" style="margin: 0px 5px; width: 26px; height: 26px; border-radius: 13px;  border: 1px solid #95b8e7; flex-direction: column;align-items: center; justify-content: center">
                 {{ index + 1 + " " }}
               </div>
               <div style="flex: 1; margin: 0 3px" @click="onEdit(index)">
-                <div style="font-size: 16px; text-align: left">
+                <div style="font-size: 18px; text-align: left">
                   {{ el.title }}
                 </div>
                 <div style="text-align: left; font-size: 12px;">
@@ -46,12 +46,14 @@
       <div class="footer">
         <div>
           <Button type="success" @click="add()">新增</Button>
-          <Button type="success"  @click="$emit('on-open-mondal')">插入</Button>
+          <Button type="success" @click="insertTo()">插入</Button>
+          <!-- <Button type="success"  @click="$emit('on-open-mondal')">插入</Button> -->
           <Button type="error" v-if="list.length > 0" @click="clearAll">清除</Button>
+          <Button type="success" v-if="list.length > 0" @click="dataJSON = JSON.stringify(list, null, 2); visibleJSON=true;">原始碼</Button>
         </div>
       </div>
     </div>
-    <modal v-model="visibleData" class-name="vertical-center-modal"
+    <modal v-model="visibleEdit" class-name="vertical-center-modal"
       :title="title" :width="300" :closable="false"
     >
       <table style="width: 100%" class="layout">
@@ -77,8 +79,16 @@
         </tr>
       </table>
       <div slot="footer">
-        <i-button type="error" @click="visibleData = false">取消</i-button>
-        <i-button type="primary" @click="onOK">確定</i-button>
+        <i-button type="error" @click="visibleEdit = false">取消</i-button>
+        <i-button type="primary" @click="onEditOK">確定</i-button>
+      </div>
+    </modal>
+    <modal fullscreen v-model="visibleJSON" class-name="vertical-center-modal" title="JSON" :closable="false">
+      <textarea v-model="dataJSON" style="font-size: 20px; width: calc(100% - 0px); height: calc(100% - 5px);">
+      </textarea>
+      <div slot="footer">
+        <i-button type="error" @click="visibleJSON = false; dataJSON = null;">取消</i-button>
+        <i-button type="primary" @click="onJSONOK">確定</i-button>
       </div>
     </modal>
   </div>
@@ -96,7 +106,9 @@ export default {
   data() {
     return {
       title: "",
-      visibleData: false,
+      visibleEdit: false,
+      visibleJSON: false,
+      dataJSON: null,
       row: {},
       list: [],
       enabled: true,
@@ -121,14 +133,14 @@ export default {
       this.cursor = index;
       this.row = Object.assign({}, this.list[index]);
       this.title = "編輯";
-      this.visibleData = true;
+      this.visibleEdit = true;
       this.$emit("on-cursor-change", this.row, index);
     },
     onClickSerial(index) {
       this.cursor = index;
       this.$emit("on-cursor-change", this.list[index], index);
     },
-    onOK() {
+    onEditOK() {
       for(let key in this.row) {
         if(key == "x" || key == "y" || key == "second") {
           if(typeof this.row[key] == "string" && this.row[key].trim().length == 0) {
@@ -139,26 +151,27 @@ export default {
           }
         }
       }
-      this.visibleData = false;
+      this.visibleEdit = false;
       let row = Object.assign({}, this.row);
+      if (typeof row.title === "undefined" || row.title.length === 0) {
+        let i = 1;
+        this.list.forEach((el) => {
+          if (
+            typeof el.title === "string" &&
+            el.title.indexOf("untitle") === 0
+          ) {
+            let s = el.title.replace("untitle", "");
+            if (!isNaN(s) && parseInt(s, 10) >= i) {
+              i = parseInt(s, 10) + 1;
+            }
+          }
+        });
+        row.title = "untitle" + i;
+      }
       if (typeof row.id === "undefined") {
         row.id = new Date().getTime();
         this.list.push(row);
-        if (typeof row.title === "undefined" || row.title.length === 0) {
-          let i = 1;
-          this.list.forEach((el) => {
-            if (
-              typeof el.title === "string" &&
-              el.title.indexOf("untitle") === 0
-            ) {
-              let s = el.title.replace("untitle", "");
-              if (!isNaN(s) && parseInt(s, 10) >= i) {
-                i = parseInt(s, 10) + 1;
-              }
-            }
-          });
-          row.title = "untitle" + i;
-        }
+
         this.cursor = this.list.length - 1;
         this.$emit("on-cursor-change", row, this.cursor);
       } else {
@@ -172,7 +185,18 @@ export default {
     add(x, y) {
       this.row = {x, y, second: 1};
       this.title = "新增";
-      this.visibleData = true;
+      this.visibleEdit = true;
+    },
+    insertTo() {
+      this.row = {second: 1, id: new Date().getTime()};
+      if(this.cursor == -1) {
+        this.list.push(this.row);
+        this.cursor = this.list.length - 1;
+      } else {
+        this.list.splice(this.cursor, 0, this.row);
+      }
+      this.title = "新增";
+      this.visibleEdit = true;
     },
     onClickIcon(index) {
       this.list.splice(index, 1);
@@ -224,6 +248,20 @@ export default {
     }, 
     reset(){
       this.cursor = -1;
+    },
+    onJSONOK() {
+      try {
+        let arr = JSON.parse(this.dataJSON);
+        this.list = arr;
+        this.save();
+        this.$emit("on-row-change", this.list);
+        this.row = {};
+        this.index = -1;
+        this.visibleJSON = false; 
+        this.dataJSON = null;
+      } catch(e) {
+        alert(e)
+      }
     }
   },
   watch: {

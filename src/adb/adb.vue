@@ -19,7 +19,7 @@
             :render="renderTreeItem" />
           </div>
           <!--  -->
-          <div id="version">2021-05-05 16:00</div>
+          <div id="version">2021-06-08 13:40</div>
         </div>
         <div slot="right" id="right" class="demo-split-pane" style="z-index: 1; overflow-x: hidden;">
           <Tabs type="card" id="adbTabs"  @on-tab-remove="onTabRemove" @on-click="onTabClick">
@@ -208,13 +208,13 @@ export default {
       if(processing == true) return;
       if(typeof node.children == "undefined") {
         if(typeof node.cmd == "string" && node.cmd.trim().length > 0) {
-          if(node.cmd.indexOf("{project.") > -1) {
+          if(node.cmd.indexOf("{project") > -1) {
             if(this.project == null) {
               this.projectPicker(()=>{
-                setProject(node.cmd);
+                setupProject(node.cmd);
               })
             } else {
-              setProject(node.cmd);
+              setupProject(node.cmd);
             }
             // openModal(node.cmd)
           } else
@@ -265,10 +265,19 @@ export default {
         processing = true;
         self.broadcast.$emit("term-execute", self.tabCurr, cmd);
       }
-      function setProject(cmd) {       
+      function setupProject(cmd) { 
+        let formats = ["yy-mm-ddThh-MM", "mm-ddThh-MM", "Thh-MM", "mm-dd", "yy-mm-dd"];
+        let today = new Date();
+        for(let i = 0; i < formats.length; i++) {
+          cmd = cmd.replace("{" + formats[i] + "}", today.toString(formats[i]));
+        }
+
+        let value = self.project["folder"].replace("/android", "");
+        cmd = cmd.replace(new RegExp("{project.root}","gm"), value)
+
         for(let key in self.project) {
           if(key == "project")
-            continue;
+            cmd = cmd.replace(new RegExp("{project}","gm"), self.project[key])
           else {
             cmd = cmd.replace(new RegExp("{project." + key + "}","gm"), self.project[key])
           }

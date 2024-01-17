@@ -400,13 +400,13 @@ export default {
           this.history.replace(waiting, "");
           this.history += "<span class='term-error' >" + arguments[i].error + "</span>";
         } else if(arguments[i] == "cwd") {
-          this.history += "<span class='tem-prompt' >~ $ </span>";
+          this.history += "<span class='term-prompt'>~ $ </span>";
         } else if(arguments[i] == "cursor") {
           this.history += cursor;
         } else if(arguments[i] == "waiting") {
           this.history += waiting;
         } else {
-          this.history += "<span>" + arguments[i].replace(new RegExp("\n","gm"),"<br/>") + "</span>"
+          this.history += "<span class='term-txt'>" + arguments[i].replace(new RegExp("\n","gm"),"<br/>") + "</span>"
         }
       }
       setTimeout(()=>{
@@ -418,7 +418,7 @@ export default {
         let child = document.querySelector("#" + this.id + " ." + arg.id);
         if(child == null) {
           let node = document.createElement("div");
-          node.innerHTML = "<span class='tem-prompt' >SQL > </span>" +
+          node.innerHTML = "<span class='term-prompt'>SQL > </span>" +
             "<span class='" + arg.id + "'>" + arg.msg + waiting+ "</span";  
           document.getElementById(this.id).appendChild(node); 
         } else {
@@ -457,7 +457,7 @@ export default {
   font-family: Arial, monospace;
   font-size: 18px;
 }
-.tem-prompt {
+.term-prompt {
   font: inherit;
   color: yellow;
 }
@@ -471,6 +471,9 @@ export default {
   margin-bottom: -2px;
   display: inline-block;
   background-color: white;
+}
+.term-txt {
+  user-select:text;
 }
 
 .demo-spin-icon-load{
