@@ -14,6 +14,7 @@
         height: height + 'px',
         padding: '5px',
         resize: 'none',
+        fontSize: '18px'
       }"
       :value="stdout"
       :readonly="true"
@@ -48,7 +49,7 @@ export default {
     return {
       visible: false,
       cycle: 5,
-      cycles: [1, 2, 3, 5, 10, 20, 30, 50, 80, 100],
+      cycles: [1, 2, 3, 5, 10, 20, 30, 50, 80, 100, 150, 200, 300],
       interval: 10,
       intervals: [0, 10, 15, 20, 30],
       width: document.body.clientWidth - 200,

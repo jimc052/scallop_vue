@@ -52,8 +52,8 @@ export default {
   },
   data () {
     return {
-      projects: ["BiPOS2", "mECR"],
-      devices: ["H10", "V2", "A920"],
+      projects: ["BiPOS2", "mECR", "JabezDC", "new2ECR", "new2DC"],
+      devices: ["H10", "V2", "A920", "T1", "T2", "T2mini"],
       edit_Item: {
         name: "",
         project: "",

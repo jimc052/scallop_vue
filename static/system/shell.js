@@ -7,9 +7,9 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
   }
   window.process = process;
 
-  window.path = sharedObj.path + sharedObj.separator + "monkey-script";
-  if (!fs.existsSync(window.path)) {
-    fs.mkdirSync(window.path);
+  window.pathScript = sharedObj.path + sharedObj.separator + "monkey-script";
+  if (!fs.existsSync(window.pathScript)) {
+    fs.mkdirSync(window.pathScript);
   }
 
   window.readImage = () => {
@@ -100,7 +100,7 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
         await window.shell("adb shell screencap -p " + androidPath + "/Download/screen.png");
         console.log("screenCapture: " + (new Date()) + ", finish......");
 
-        let result2 = await window.shell("adb pull " + androidPath + "/Download/screen.png " + window.path + "/screen.png");
+        let result2 = await window.shell("adb pull " + androidPath + "/Download/screen.png " + window.pathScript + "/screen.png");
         console.log("pull: "  + (new Date()) + "\n  " + result2);
 
         // let result3 = await window.shell("adb shell rm " + androidPath + "/Download/screen.png");
@@ -120,7 +120,7 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
       try{
         let androidPath = "/sdcard";
         if(typeof write == "undefined" || write == true) {
-          window.fileWrite(txt);
+          window.fileWrite(window.pathScript + "/monkey.script", txt);
 
           if(typeof stdout == "function") stdout("adb shell rm -f monkey.script ......");
           let result1 = await window.shell("adb shell rm -f " + androidPath + "/monkey.script");
@@ -130,7 +130,7 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
             console.log("adb shell rm: " + result1);
 
           if(typeof stdout == "function") stdout("adb push monkey.script ......");
-          let result2 = await window.shell("adb push " + window.path + "/monkey.script " + androidPath + "/monkey.script");
+          let result2 = await window.shell("adb push " + window.pathScript + "/monkey.script " + androidPath + "/monkey.script");
           if(typeof stdout == "function") 
             stdout(result2);
           else
@@ -161,9 +161,9 @@ if (navigator.userAgent.indexOf("Electron") > -1) {
     });
   }
 
-  window.fileWrite = (txt) => {
+  window.fileWrite = (path, txt) => {
     try{
-      fs.writeFileSync(window.path + "/monkey.script", txt, 'utf8');
+      fs.writeFileSync(path, txt, 'utf8');
     } catch(e) {
 
     }
